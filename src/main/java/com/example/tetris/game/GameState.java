@@ -18,7 +18,9 @@ public record GameState(
     TetrominoType heldType,
     List<TetrominoType> nextQueue,
     Direction pendingDirection,
-    boolean inSpawnGrace
+    boolean inSpawnGrace,
+    double clearFlashProgress,
+    int clearFlashMultiplier
 ) {
 
     public GameState {

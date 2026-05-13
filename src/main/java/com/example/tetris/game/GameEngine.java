@@ -13,6 +13,7 @@ public final class GameEngine {
     private static final double GRAVITY_BASE = 0.82;
     private static final double GRAVITY_MIN_MS = 16.0;
     private static final double USER_CHOICE_GRACE_MS = 500.0;
+    private static final double CLEAR_FLASH_DURATION_MS = 300.0;
 
     private final Board board;
     private final PieceQueue pieceQueue;
@@ -27,6 +28,8 @@ public final class GameEngine {
     private double gravityAccumulatedMs;
     private boolean inSpawnGrace;
     private double spawnGraceRemainingMs;
+    private double clearFlashRemainingMs;
+    private int clearFlashMultiplier;
 
     public GameEngine(PieceProvider pieceProvider) {
         this(pieceProvider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
@@ -60,6 +63,12 @@ public final class GameEngine {
             if (spawnGraceRemainingMs <= 0) {
                 inSpawnGrace = false;
                 spawnGraceRemainingMs = 0.0;
+            }
+        }
+        if (clearFlashRemainingMs > 0) {
+            clearFlashRemainingMs -= deltaMs;
+            if (clearFlashRemainingMs < 0) {
+                clearFlashRemainingMs = 0;
             }
         }
         gravityAccumulatedMs += deltaMs;
@@ -204,6 +213,7 @@ public final class GameEngine {
             score = score.addLines(total);
             int newLevel = score.level();
             score = score.addPoints(ScoringService.resultPoints(result, newLevel));
+            triggerClearFlash(result);
         }
         holdSlot.unlock();
         spawnFromQueue();
@@ -236,6 +246,18 @@ public final class GameEngine {
         spawnGraceRemainingMs = USER_CHOICE_GRACE_MS;
     }
 
+    private void triggerClearFlash(LineClearService.LineClearResult result) {
+        int maxMultiplier = 1;
+        for (LineClearService.CascadeStep step : result.steps()) {
+            int m = ScoringService.multiplierFor(step);
+            if (m > maxMultiplier) {
+                maxMultiplier = m;
+            }
+        }
+        clearFlashMultiplier = maxMultiplier;
+        clearFlashRemainingMs = CLEAR_FLASH_DURATION_MS;
+    }
+
     private static double gravityPeriodMs(int level) {
         double period = GRAVITY_LEVEL_1_MS * Math.pow(GRAVITY_BASE, level - 1);
         return Math.max(GRAVITY_MIN_MS, period);
@@ -246,6 +268,9 @@ public final class GameEngine {
         if (mode == GameMode.USER_CHOICE && directionStrategy instanceof UserChoiceDirectionStrategy ucs) {
             pendingDirection = ucs.pending();
         }
+        double progress = clearFlashRemainingMs > 0
+            ? clearFlashRemainingMs / CLEAR_FLASH_DURATION_MS
+            : 0.0;
         return new GameState(
             board,
             current,
@@ -256,7 +281,9 @@ public final class GameEngine {
             holdSlot.type(),
             pieceQueue.peek(),
             pendingDirection,
-            inSpawnGrace
+            inSpawnGrace,
+            progress,
+            clearFlashRemainingMs > 0 ? clearFlashMultiplier : 0
         );
     }
 }

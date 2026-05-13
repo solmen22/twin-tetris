@@ -30,11 +30,29 @@ public final class GameCanvas extends Canvas {
             drawPiece(g, state.currentPiece());
         }
         drawCenterBoundary(g);
+        if (state.clearFlashProgress() > 0) {
+            drawClearFlash(g, state.clearFlashProgress(), state.clearFlashMultiplier());
+        }
         if (state.gameOver()) {
             drawGameOver(g);
         } else if (state.paused()) {
             drawPaused(g);
         }
+    }
+
+    private void drawClearFlash(GraphicsContext g, double progress, int multiplier) {
+        double baseAlpha = switch (multiplier) {
+            case 5 -> 0.55;
+            case 2 -> 0.30;
+            default -> 0.15;
+        };
+        Color tint = switch (multiplier) {
+            case 5 -> Color.color(1.0, 0.55, 0.2);
+            case 2 -> Color.color(1.0, 0.4, 0.85);
+            default -> Color.color(1.0, 1.0, 1.0);
+        };
+        g.setFill(tint.deriveColor(0, 1, 1, baseAlpha * progress));
+        g.fillRect(0, 0, WIDTH, HEIGHT);
     }
 
     private void clear(GraphicsContext g) {
