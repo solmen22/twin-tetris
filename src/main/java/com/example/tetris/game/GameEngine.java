@@ -137,10 +137,12 @@ public final class GameEngine {
         for (Position p : current.cells()) {
             board.place(p, type);
         }
-        int cleared = LineClearService.clearUpperHalf(board);
-        if (cleared > 0) {
-            score = score.addPoints(ScoringService.lineClearPoints(cleared, score.level()));
-            score = score.addLines(cleared);
+        LineClearService.LineClearResult result = LineClearService.processClears(board);
+        if (!result.isEmpty()) {
+            int total = result.totalLines();
+            score = score.addLines(total);
+            int newLevel = score.level();
+            score = score.addPoints(ScoringService.resultPoints(result, newLevel));
         }
         spawnNext();
     }
