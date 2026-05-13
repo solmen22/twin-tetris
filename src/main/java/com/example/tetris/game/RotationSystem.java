@@ -21,7 +21,7 @@ public final class RotationSystem {
 
     private static Optional<Tetromino> tryRotate(Board board, Tetromino piece, Rotation target) {
         Tetromino rotated = piece.withRotation(target);
-        int[][] kicks = WallKicks.offsetsForDown(piece.type(), piece.rotation(), target);
+        int[][] kicks = WallKicks.offsetsFor(piece.direction(), piece.type(), piece.rotation(), target);
         for (int[] kick : kicks) {
             Tetromino candidate = rotated.translated(kick[0], kick[1]);
             if (!CollisionDetector.collides(board, candidate)) {

@@ -1,9 +1,9 @@
 package com.example.tetris.game;
 
+import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Rotation;
 import com.example.tetris.domain.TetrominoType;
 
-import java.util.EnumMap;
 import java.util.Map;
 
 public final class WallKicks {
@@ -66,5 +66,18 @@ public final class WallKicks {
             return I_KICKS.getOrDefault(key, NO_KICK);
         }
         return JLSTZ_KICKS.getOrDefault(key, NO_KICK);
+    }
+
+    public static int[][] offsetsFor(Direction direction, TetrominoType type, Rotation from, Rotation to) {
+        int[][] base = offsetsForDown(type, from, to);
+        if (direction == Direction.DOWN) {
+            return base;
+        }
+        int[][] inverted = new int[base.length][2];
+        for (int i = 0; i < base.length; i++) {
+            inverted[i][0] = -base[i][0];
+            inverted[i][1] = base[i][1];
+        }
+        return inverted;
     }
 }
