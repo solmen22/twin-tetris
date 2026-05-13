@@ -24,7 +24,7 @@ javafx {
 }
 
 application {
-    mainClass = 'com.example.tetris.App'
+    mainClass = 'com.example.tetris.Launcher'
     applicationDefaultJvmArgs = []
 }
 
