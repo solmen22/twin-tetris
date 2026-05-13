@@ -2,6 +2,8 @@ package com.example.tetris.game;
 
 import com.example.tetris.domain.Direction;
 
+import java.util.Random;
+
 @FunctionalInterface
 public interface DirectionStrategy {
 
@@ -13,5 +15,17 @@ public interface DirectionStrategy {
 
     static DirectionStrategy alternating() {
         return new AlternatingDirectionStrategy();
+    }
+
+    static DirectionStrategy random() {
+        return new RandomDirectionStrategy();
+    }
+
+    static DirectionStrategy random(Random random) {
+        return new RandomDirectionStrategy(random);
+    }
+
+    static UserChoiceDirectionStrategy userChoice() {
+        return new UserChoiceDirectionStrategy();
     }
 }
