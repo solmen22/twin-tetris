@@ -45,6 +45,26 @@ public enum TetrominoType {
         return this == I ? 4 : 3;
     }
 
+    public int maxLocalRow(Rotation rotation) {
+        int max = 0;
+        for (Position p : cellsAt(rotation)) {
+            if (p.row() > max) {
+                max = p.row();
+            }
+        }
+        return max;
+    }
+
+    public int minLocalRow(Rotation rotation) {
+        int min = Integer.MAX_VALUE;
+        for (Position p : cellsAt(rotation)) {
+            if (p.row() < min) {
+                min = p.row();
+            }
+        }
+        return min;
+    }
+
     private void register(Rotation rotation, int[][] cells) {
         List<Position> positions = new java.util.ArrayList<>(cells.length);
         for (int[] rc : cells) {

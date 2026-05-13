@@ -15,16 +15,41 @@ class TetrominoTest {
         assertThat(piece.type()).isEqualTo(TetrominoType.T);
         assertThat(piece.direction()).isEqualTo(Direction.DOWN);
         assertThat(piece.rotation()).isEqualTo(Rotation.SPAWN);
-        assertThat(piece.origin()).isEqualTo(new Position(Constants.SPAWN_DOWN_ROW, Constants.SPAWN_DOWN_COL));
+        assertThat(piece.origin()).isEqualTo(new Position(Constants.SPAWN_DOWN_ROW, Constants.SPAWN_COL));
     }
 
     @Test
-    void spawnUpはUP方向で半回転_下端付近に配置される() {
+    void spawnUpはUP方向で半回転_最下端セルがrow20に来るよう配置される() {
         Tetromino piece = Tetromino.spawnUp(TetrominoType.T);
 
         assertThat(piece.direction()).isEqualTo(Direction.UP);
         assertThat(piece.rotation()).isEqualTo(Rotation.HALF);
-        assertThat(piece.origin()).isEqualTo(new Position(Constants.SPAWN_UP_ROW, Constants.SPAWN_UP_COL));
+        assertThat(piece.origin().col()).isEqualTo(Constants.SPAWN_COL);
+
+        int maxRow = piece.cells().stream().mapToInt(Position::row).max().orElseThrow();
+        assertThat(maxRow).isEqualTo(Constants.BOARD_HEIGHT - 1);
+    }
+
+    @Test
+    void spawnUp_OミノはBOARD最下行から2行を占有する() {
+        Tetromino piece = Tetromino.spawnUp(TetrominoType.O);
+
+        int maxRow = piece.cells().stream().mapToInt(Position::row).max().orElseThrow();
+        int minRow = piece.cells().stream().mapToInt(Position::row).min().orElseThrow();
+
+        assertThat(maxRow).isEqualTo(Constants.BOARD_HEIGHT - 1);
+        assertThat(minRow).isEqualTo(Constants.BOARD_HEIGHT - 2);
+    }
+
+    @Test
+    void spawnUp_IミノはBOARD最下行に1行を占有する() {
+        Tetromino piece = Tetromino.spawnUp(TetrominoType.I);
+
+        int maxRow = piece.cells().stream().mapToInt(Position::row).max().orElseThrow();
+        int minRow = piece.cells().stream().mapToInt(Position::row).min().orElseThrow();
+
+        assertThat(maxRow).isEqualTo(Constants.BOARD_HEIGHT - 1);
+        assertThat(minRow).isEqualTo(Constants.BOARD_HEIGHT - 1);
     }
 
     @Test
@@ -53,7 +78,7 @@ class TetrominoTest {
         Tetromino moved = piece.translated(3, -2);
 
         assertThat(moved.origin()).isEqualTo(piece.origin().translate(3, -2));
-        assertThat(piece.origin()).isEqualTo(new Position(Constants.SPAWN_DOWN_ROW, Constants.SPAWN_DOWN_COL));
+        assertThat(piece.origin()).isEqualTo(new Position(Constants.SPAWN_DOWN_ROW, Constants.SPAWN_COL));
     }
 
     @Test

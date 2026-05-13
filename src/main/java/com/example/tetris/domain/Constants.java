@@ -11,10 +11,8 @@ public final class Constants {
     public static final int LOWER_FIELD_TOP = 11;
     public static final int LOWER_FIELD_BOTTOM = 20;
 
-    public static final int SPAWN_DOWN_COL = 3;
+    public static final int SPAWN_COL = 3;
     public static final int SPAWN_DOWN_ROW = 0;
-    public static final int SPAWN_UP_COL = 3;
-    public static final int SPAWN_UP_ROW = BOARD_HEIGHT - 4;
 
     private Constants() {
     }

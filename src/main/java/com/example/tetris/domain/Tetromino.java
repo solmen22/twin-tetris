@@ -8,16 +8,18 @@ public record Tetromino(TetrominoType type, Position origin, Rotation rotation, 
     public static Tetromino spawnDown(TetrominoType type) {
         return new Tetromino(
             type,
-            new Position(Constants.SPAWN_DOWN_ROW, Constants.SPAWN_DOWN_COL),
+            new Position(Constants.SPAWN_DOWN_ROW, Constants.SPAWN_COL),
             Rotation.SPAWN,
             Direction.DOWN
         );
     }
 
     public static Tetromino spawnUp(TetrominoType type) {
+        int maxLocalRow = type.maxLocalRow(Rotation.HALF);
+        int originRow = Constants.BOARD_HEIGHT - 1 - maxLocalRow;
         return new Tetromino(
             type,
-            new Position(Constants.SPAWN_UP_ROW, Constants.SPAWN_UP_COL),
+            new Position(originRow, Constants.SPAWN_COL),
             Rotation.HALF,
             Direction.UP
         );
