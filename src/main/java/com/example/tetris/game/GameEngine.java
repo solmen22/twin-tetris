@@ -1,6 +1,7 @@
 package com.example.tetris.game;
 
 import com.example.tetris.domain.Board;
+import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Position;
 import com.example.tetris.domain.Score;
 import com.example.tetris.domain.Tetromino;
@@ -14,6 +15,7 @@ public final class GameEngine {
 
     private final Board board;
     private final PieceProvider pieceProvider;
+    private final DirectionStrategy directionStrategy;
 
     private Tetromino current;
     private Score score;
@@ -22,8 +24,13 @@ public final class GameEngine {
     private double gravityAccumulatedMs;
 
     public GameEngine(PieceProvider pieceProvider) {
+        this(pieceProvider, DirectionStrategy.alwaysDown());
+    }
+
+    public GameEngine(PieceProvider pieceProvider, DirectionStrategy directionStrategy) {
         this.board = new Board();
         this.pieceProvider = pieceProvider;
+        this.directionStrategy = directionStrategy;
         this.score = Score.initial();
         this.gameOver = false;
         this.paused = false;
@@ -44,7 +51,7 @@ public final class GameEngine {
     }
 
     private void applyGravityStep() {
-        Tetromino moved = current.translated(1, 0);
+        Tetromino moved = current.translated(current.direction().rowStep(), 0);
         if (CollisionDetector.collides(board, moved)) {
             lockAndRespawn();
         } else {
@@ -74,7 +81,8 @@ public final class GameEngine {
         if (!canActOnPiece()) {
             return;
         }
-        Tetromino moved = current.translated(1, 0);
+        int step = current.direction().rowStep();
+        Tetromino moved = current.translated(step, 0);
         if (!CollisionDetector.collides(board, moved)) {
             current = moved;
             score = score.addPoints(ScoringService.softDropPoints(1));
@@ -86,9 +94,10 @@ public final class GameEngine {
         if (!canActOnPiece()) {
             return;
         }
+        int step = current.direction().rowStep();
         int cells = 0;
         while (true) {
-            Tetromino moved = current.translated(1, 0);
+            Tetromino moved = current.translated(step, 0);
             if (CollisionDetector.collides(board, moved)) {
                 break;
             }
@@ -137,7 +146,11 @@ public final class GameEngine {
     }
 
     private void spawnNext() {
-        Tetromino piece = Tetromino.spawnDown(pieceProvider.next());
+        Direction direction = directionStrategy.next();
+        TetrominoType type = pieceProvider.next();
+        Tetromino piece = direction == Direction.DOWN
+            ? Tetromino.spawnDown(type)
+            : Tetromino.spawnUp(type);
         if (CollisionDetector.collides(board, piece)) {
             gameOver = true;
             current = null;
