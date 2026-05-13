@@ -16,7 +16,7 @@ public final class ScorePanel extends HBox {
         super(40);
         setAlignment(Pos.CENTER);
         setPadding(new javafx.geometry.Insets(10));
-        setStyle("-fx-background-color: " + toCssHex(UIConstants.BACKGROUND_COLOR));
+        setStyle("-fx-background-color: " + UIConstants.cssHex(UIConstants.BACKGROUND_COLOR));
 
         scoreLabel = makeLabel("SCORE: 0");
         levelLabel = makeLabel("LEVEL: 1");
@@ -34,14 +34,7 @@ public final class ScorePanel extends HBox {
     private static Label makeLabel(String initial) {
         Label l = new Label(initial);
         l.setFont(Font.font(UIConstants.HUD_FONT_FAMILY, UIConstants.HUD_FONT_SIZE_LARGE));
-        l.setStyle("-fx-text-fill: " + toCssHex(UIConstants.HUD_TEXT_COLOR));
+        l.setStyle("-fx-text-fill: " + UIConstants.cssHex(UIConstants.HUD_TEXT_COLOR));
         return l;
-    }
-
-    private static String toCssHex(javafx.scene.paint.Color color) {
-        return String.format("#%02x%02x%02x",
-            (int) Math.round(color.getRed() * 255),
-            (int) Math.round(color.getGreen() * 255),
-            (int) Math.round(color.getBlue() * 255));
     }
 }

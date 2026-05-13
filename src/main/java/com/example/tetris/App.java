@@ -1,8 +1,9 @@
 package com.example.tetris;
 
+import com.example.tetris.game.BagGenerator;
 import com.example.tetris.game.DirectionStrategy;
 import com.example.tetris.game.GameEngine;
-import com.example.tetris.game.RandomPieceProvider;
+import com.example.tetris.game.GameMode;
 import com.example.tetris.input.KeyboardController;
 import com.example.tetris.ui.MainView;
 import com.example.tetris.ui.UIConstants;
@@ -44,7 +45,7 @@ public class App extends Application {
     }
 
     private GameEngine newEngine() {
-        return new GameEngine(new RandomPieceProvider(), DirectionStrategy.alternating());
+        return new GameEngine(new BagGenerator(), DirectionStrategy.userChoice(), GameMode.USER_CHOICE);
     }
 
     private void restart() {

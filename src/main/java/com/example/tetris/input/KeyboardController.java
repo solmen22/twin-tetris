@@ -41,6 +41,12 @@ public final class KeyboardController {
                 engine.rotateCw();
             } else if (KeyBindings.ROTATE_CCW.contains(code)) {
                 engine.rotateCcw();
+            } else if (KeyBindings.HOLD.contains(code)) {
+                engine.hold();
+            } else if (KeyBindings.DIRECTION_DOWN_SPAWN.contains(code)) {
+                engine.selectDirectionDown();
+            } else if (KeyBindings.DIRECTION_UP_SPAWN.contains(code)) {
+                engine.selectDirectionUp();
             }
         });
     }

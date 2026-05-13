@@ -30,4 +30,11 @@ public final class UIConstants {
 
     private UIConstants() {
     }
+
+    public static String cssHex(Color color) {
+        return String.format("#%02x%02x%02x",
+            (int) Math.round(color.getRed() * 255),
+            (int) Math.round(color.getGreen() * 255),
+            (int) Math.round(color.getBlue() * 255));
+    }
 }
