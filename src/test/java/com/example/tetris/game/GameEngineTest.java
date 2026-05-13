@@ -181,6 +181,161 @@ class GameEngineTest {
     }
 
     @Test
+    void GameStateはNEXTキューの先頭3個を露出する() {
+        TestPieceProvider provider = new TestPieceProvider(
+            List.of(TetrominoType.I, TetrominoType.O, TetrominoType.T, TetrominoType.S, TetrominoType.Z),
+            TetrominoType.J
+        );
+
+        GameEngine engine = new GameEngine(provider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+
+        // 最初のミノは I が現在ミノに。next 3 は O,T,S
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.I);
+        assertThat(engine.state().nextQueue()).containsExactly(TetrominoType.O, TetrominoType.T, TetrominoType.S);
+    }
+
+    @Test
+    void hold_スロットが空ならNEXTから次が出る() {
+        TestPieceProvider provider = new TestPieceProvider(
+            List.of(TetrominoType.I, TetrominoType.O, TetrominoType.T, TetrominoType.S),
+            TetrominoType.Z
+        );
+        GameEngine engine = new GameEngine(provider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+        // I が現在
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.I);
+
+        engine.hold();
+
+        // I が hold、O が現在ミノ
+        assertThat(engine.state().heldType()).isEqualTo(TetrominoType.I);
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.O);
+    }
+
+    @Test
+    void hold_スロットに既にあれば現在ミノと交換() {
+        TestPieceProvider provider = new TestPieceProvider(
+            List.of(TetrominoType.I, TetrominoType.O, TetrominoType.T),
+            TetrominoType.S
+        );
+        GameEngine engine = new GameEngine(provider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+        engine.hold();
+        // I が hold、O が現在
+        engine.hardDrop();  // O ロック → T 出現、hold ロック解除
+        // T が現在、I が hold
+
+        engine.hold();
+
+        // T が hold、I が現在ミノとして復活
+        assertThat(engine.state().heldType()).isEqualTo(TetrominoType.T);
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.I);
+    }
+
+    @Test
+    void hold_連続実行は禁止される() {
+        TestPieceProvider provider = new TestPieceProvider(
+            List.of(TetrominoType.I, TetrominoType.O, TetrominoType.T),
+            TetrominoType.S
+        );
+        GameEngine engine = new GameEngine(provider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+
+        engine.hold();  // I → hold、O が現在
+        TetrominoType heldBefore = engine.state().heldType();
+        TetrominoType currentBefore = engine.state().currentPiece().type();
+
+        engine.hold();  // ロックされているので無視
+
+        assertThat(engine.state().heldType()).isEqualTo(heldBefore);
+        assertThat(engine.state().currentPiece().type()).isEqualTo(currentBefore);
+    }
+
+    @Test
+    void hold_ロックは次のスポーン後に解除される() {
+        TestPieceProvider provider = new TestPieceProvider(
+            List.of(TetrominoType.I, TetrominoType.O, TetrominoType.T, TetrominoType.S),
+            TetrominoType.Z
+        );
+        GameEngine engine = new GameEngine(provider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+
+        engine.hold();      // I → hold、O が現在 (ロック中)
+        engine.hardDrop();  // O ロック → T 出現、hold 解除
+        engine.hold();      // T → hold、I が復活
+
+        assertThat(engine.state().heldType()).isEqualTo(TetrominoType.T);
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.I);
+    }
+
+    @Test
+    void USER_CHOICE_モードのstateはpendingDirectionを露出する() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+
+        assertThat(engine.state().pendingDirection()).isEqualTo(Direction.DOWN);
+        assertThat(engine.state().mode()).isEqualTo(GameMode.USER_CHOICE);
+    }
+
+    @Test
+    void USER_CHOICE_モードのselectDirectionUpは保留方向を切り替える() {
+        UserChoiceDirectionStrategy strategy = DirectionStrategy.userChoice();
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            strategy,
+            GameMode.USER_CHOICE
+        );
+
+        engine.selectDirectionUp();
+
+        assertThat(strategy.pending()).isEqualTo(Direction.UP);
+        assertThat(engine.state().pendingDirection()).isEqualTo(Direction.UP);
+    }
+
+    @Test
+    void USER_CHOICE_モードのspawnGrace中はselectDirectionで現在ミノが再生成される() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+
+        // 起動直後は grace 中 (initial spawn)
+        assertThat(engine.state().inSpawnGrace()).isTrue();
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+
+        engine.selectDirectionUp();
+
+        // grace 中なので現在ミノが UP で再スポーン
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.UP);
+    }
+
+    @Test
+    void USER_CHOICE_モードのspawnGraceは500ms経過で終了() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+
+        assertThat(engine.state().inSpawnGrace()).isTrue();
+
+        engine.tick(501);
+
+        assertThat(engine.state().inSpawnGrace()).isFalse();
+    }
+
+    @Test
+    void RANDOM_モードはspawnGraceに入らない() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            DirectionStrategy.alwaysDown(),
+            GameMode.RANDOM
+        );
+
+        assertThat(engine.state().inSpawnGrace()).isFalse();
+    }
+
+    @Test
     void ラインが揃えばスコアとライン数が加算される() {
         GameEngine engine = new GameEngine(new TestPieceProvider(TetrominoType.I));
         var board = engine.state().board();
