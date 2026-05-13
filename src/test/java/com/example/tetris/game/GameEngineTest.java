@@ -1,6 +1,7 @@
 package com.example.tetris.game;
 
 import com.example.tetris.domain.Constants;
+import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Position;
 import com.example.tetris.domain.TetrominoType;
 import org.junit.jupiter.api.Test;
@@ -124,6 +125,59 @@ class GameEngineTest {
         engine.hardDrop();
 
         assertThat(engine.state().gameOver()).isTrue();
+    }
+
+    @Test
+    void Alternating戦略では最初DOWN次UPがスポーンされる() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(List.of(TetrominoType.T, TetrominoType.T), TetrominoType.T),
+            DirectionStrategy.alternating()
+        );
+
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+        engine.hardDrop();
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.UP);
+    }
+
+    @Test
+    void UPミノはtickで上方向に上昇する() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(List.of(TetrominoType.T), TetrominoType.T),
+            new AlternatingDirectionStrategy(Direction.UP)
+        );
+        int beforeRow = engine.state().currentPiece().origin().row();
+
+        engine.tick(2000);
+
+        assertThat(engine.state().currentPiece().origin().row()).isLessThan(beforeRow);
+    }
+
+    @Test
+    void UPミノのハードドロップは中央境界線に到達して固定される() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(List.of(TetrominoType.O, TetrominoType.O), TetrominoType.O),
+            new AlternatingDirectionStrategy(Direction.UP)
+        );
+
+        engine.hardDrop();
+
+        // O ミノは UP のとき row 19-20 で発生し、上昇して中央境界線で止まる
+        // 1 個目の O が row 10-11 のあたりに固定される
+        assertThat(engine.state().board().cellAt(Constants.CENTER_ROW, 4).isFilled()).isTrue();
+    }
+
+    @Test
+    void UPミノのhardDropもセルあたり2点() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(List.of(TetrominoType.O, TetrominoType.O), TetrominoType.O),
+            new AlternatingDirectionStrategy(Direction.UP)
+        );
+        long before = engine.state().score().points();
+
+        engine.hardDrop();
+
+        // O ミノは spawnUp で row 19-20 (origin row 19) → row 10-11 (origin row 10) まで 9 セル上昇
+        assertThat(engine.state().score().points()).isEqualTo(before + 18);
     }
 
     @Test

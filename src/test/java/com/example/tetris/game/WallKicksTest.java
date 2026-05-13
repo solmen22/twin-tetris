@@ -1,5 +1,6 @@
 package com.example.tetris.game;
 
+import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Rotation;
 import com.example.tetris.domain.TetrominoType;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,38 @@ class WallKicksTest {
                 int[][] kicks = WallKicks.offsetsForDown(type, from, to);
                 assertThat(kicks[0]).as("%s %s→%s", type, from, to).containsExactly(0, 0);
             }
+        }
+    }
+
+    @Test
+    void UPミノのキックはDOWNミノのdrowを符号反転する() {
+        int[][] down = WallKicks.offsetsFor(Direction.DOWN, TetrominoType.T, Rotation.SPAWN, Rotation.RIGHT);
+        int[][] up = WallKicks.offsetsFor(Direction.UP, TetrominoType.T, Rotation.SPAWN, Rotation.RIGHT);
+
+        assertThat(up).hasNumberOfRows(down.length);
+        for (int i = 0; i < down.length; i++) {
+            assertThat(up[i][0]).as("kick %d drow inverted", i).isEqualTo(-down[i][0]);
+            assertThat(up[i][1]).as("kick %d dcol preserved", i).isEqualTo(down[i][1]);
+        }
+    }
+
+    @Test
+    void UPミノでもOミノはNO_KICKのまま() {
+        int[][] kicks = WallKicks.offsetsFor(Direction.UP, TetrominoType.O, Rotation.SPAWN, Rotation.RIGHT);
+
+        assertThat(kicks).hasDimensions(1, 2);
+        assertThat(kicks[0]).containsExactly(0, 0);
+    }
+
+    @Test
+    void UPミノのIミノも各遷移で5回のキック_drow反転() {
+        int[][] down = WallKicks.offsetsFor(Direction.DOWN, TetrominoType.I, Rotation.HALF, Rotation.LEFT);
+        int[][] up = WallKicks.offsetsFor(Direction.UP, TetrominoType.I, Rotation.HALF, Rotation.LEFT);
+
+        assertThat(up).hasNumberOfRows(5);
+        for (int i = 0; i < 5; i++) {
+            assertThat(up[i][0]).isEqualTo(-down[i][0]);
+            assertThat(up[i][1]).isEqualTo(down[i][1]);
         }
     }
 }
