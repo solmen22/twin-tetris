@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Bidirectional Tetris</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+    <div id="menu" class="screen">
+        <h1>Bidirectional Tetris</h1>
+        <p class="subtitle">中央基準の双方向重力テトリス</p>
+        <div class="menu-buttons">
+            <button id="mode-random" class="menu-button">
+                <span class="mode-name">RANDOM</span>
+                <span class="mode-desc">上下からランダムにミノが出現</span>
+            </button>
+            <button id="mode-alternating" class="menu-button">
+                <span class="mode-name">ALTERNATING</span>
+                <span class="mode-desc">上下から交互にミノが出現</span>
+            </button>
+            <button id="mode-user-choice" class="menu-button">
+                <span class="mode-name">USER CHOICE</span>
+                <span class="mode-desc">W: 下方向 / S: 上方向 を選択</span>
+            </button>
+        </div>
+        <div class="keyhelp">
+            <h3>操作</h3>
+            <ul>
+                <li><kbd>←</kbd> / <kbd>→</kbd> 左右移動</li>
+                <li><kbd>↓</kbd> ソフトドロップ</li>
+                <li><kbd>Space</kbd> ハードドロップ</li>
+                <li><kbd>↑</kbd> / <kbd>X</kbd> 右回転 / <kbd>Z</kbd> 左回転</li>
+                <li><kbd>C</kbd> / <kbd>Shift</kbd> Hold</li>
+                <li><kbd>W</kbd> / <kbd>S</kbd> 方向選択 (USER CHOICE モード)</li>
+                <li><kbd>P</kbd> / <kbd>Esc</kbd> ポーズ / <kbd>R</kbd> リスタート</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="game" class="screen hidden">
+        <div class="side-panel left">
+            <div class="hud-block">
+                <div class="hud-label">HOLD</div>
+                <canvas id="hold-canvas" width="120" height="120"></canvas>
+            </div>
+            <div class="hud-block">
+                <div class="hud-label">MODE</div>
+                <div id="mode-text" class="hud-value">-</div>
+            </div>
+            <div class="hud-block">
+                <div class="hud-label">方向</div>
+                <div id="direction-text" class="hud-value">-</div>
+            </div>
+        </div>
+
+        <canvas id="board-canvas"></canvas>
+
+        <div class="side-panel right">
+            <div class="hud-block">
+                <div class="hud-label">NEXT</div>
+                <canvas id="next-canvas" width="120" height="400"></canvas>
+            </div>
+            <div class="hud-block">
+                <div class="hud-label">SCORE</div>
+                <div id="score-text" class="hud-value big">0</div>
+            </div>
+            <div class="hud-block">
+                <div class="hud-label">LEVEL</div>
+                <div id="level-text" class="hud-value">1</div>
+            </div>
+            <div class="hud-block">
+                <div class="hud-label">LINES</div>
+                <div id="lines-text" class="hud-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameover" class="overlay hidden">
+        <div class="overlay-inner">
+            <h2>GAME OVER</h2>
+            <div id="final-score" class="final-score-line"></div>
+            <div id="new-record" class="new-record hidden">★ NEW RECORD ★</div>
+            <div class="overlay-buttons">
+                <button id="retry-button">Retry</button>
+                <button id="menu-button">Menu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="tetris.js"></script>
+<script type="text/javascript">
+    window.addEventListener('load', function () {
+        if (typeof main === 'function') {
+            main([]);
+        }
+    });
+</script>
+</body>
+</html>
