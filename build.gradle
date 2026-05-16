@@ -3,6 +3,7 @@ plugins {
     id 'java'
     id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'com.gradleup.shadow' version '8.3.5'
+    id 'org.teavm' version '0.10.2'
 }
 
 group = 'com.example'
@@ -33,10 +34,17 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.16'
     implementation 'ch.qos.logback:logback-classic:1.5.8'
 
+    implementation 'org.teavm:teavm-jso:0.10.2'
+    implementation 'org.teavm:teavm-jso-apis:0.10.2'
+
     testImplementation platform('org.junit:junit-bom:5.11.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.assertj:assertj-core:3.26.3'
+}
+
+afterEvaluate {
+    configurations.findByName('teavmClasspath')?.exclude(group: 'org.openjfx')
 }
 
 test {
@@ -56,4 +64,28 @@ shadowJar {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs += ['-Xlint:all', '-Xlint:-serial']
+}
+
+teavm {
+    js {
+        addedToWebApp = false
+        mainClass = 'com.example.tetris.web.WebMain'
+        targetFileName = 'tetris.js'
+        sourceMap = true
+        obfuscated = false
+    }
+
+    all {
+        outOfProcess = false
+    }
+}
+
+tasks.register('webDist', Copy) {
+    dependsOn 'generateJavaScript'
+    from('src/web')
+    from(layout.buildDirectory.dir('generated/teavm/js')) {
+        include 'tetris.js', 'tetris.js.map'
+    }
+    into layout.buildDirectory.dir('webDist')
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }

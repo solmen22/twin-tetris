@@ -24,3 +24,6 @@ logs/
 
 # Compiled
 *.class
+
+# Claude Code personal settings
+.claude/settings.local.json
