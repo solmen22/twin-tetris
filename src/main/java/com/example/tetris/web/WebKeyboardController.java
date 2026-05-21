@@ -9,75 +9,48 @@ public final class WebKeyboardController {
 
     private final Supplier<GameEngine> engineSupplier;
     private final Runnable restartHandler;
+    private final SettingsStore settings;
 
-    public WebKeyboardController(Supplier<GameEngine> engineSupplier, Runnable restartHandler) {
+    public WebKeyboardController(
+        Supplier<GameEngine> engineSupplier,
+        Runnable restartHandler,
+        SettingsStore settings
+    ) {
         this.engineSupplier = engineSupplier;
         this.restartHandler = restartHandler;
+        this.settings = settings;
     }
 
     public boolean handle(KeyboardEvent event) {
-        String key = event.getKey();
-        if (key == null) {
+        String code = event.getCode();
+        if (code == null || code.isEmpty()) {
             return false;
+        }
+        Action action = settings.actionForCode(code);
+        if (action == null) {
+            return false;
+        }
+        if (action == Action.RESET) {
+            restartHandler.run();
+            return true;
         }
         GameEngine engine = engineSupplier.get();
         if (engine == null) {
             return false;
         }
-
-        if (matches(key, "r", "R")) {
-            restartHandler.run();
-            return true;
+        switch (action) {
+            case MOVE_LEFT -> engine.moveLeft();
+            case MOVE_RIGHT -> engine.moveRight();
+            case SOFT_DROP -> engine.softDrop();
+            case HARD_DROP -> engine.hardDrop();
+            case ROTATE_CW -> engine.rotateCw();
+            case ROTATE_CCW -> engine.rotateCcw();
+            case HOLD -> engine.hold();
+            case SELECT_DOWN -> engine.selectDirectionDown();
+            case SELECT_UP -> engine.selectDirectionUp();
+            case PAUSE -> engine.togglePause();
+            case RESET -> { /* handled above */ }
         }
-        if (matches(key, "Escape", "p", "P")) {
-            engine.togglePause();
-            return true;
-        }
-        if (matches(key, "ArrowLeft")) {
-            engine.moveLeft();
-            return true;
-        }
-        if (matches(key, "ArrowRight")) {
-            engine.moveRight();
-            return true;
-        }
-        if (matches(key, "ArrowDown")) {
-            engine.softDrop();
-            return true;
-        }
-        if (matches(key, " ", "Spacebar")) {
-            engine.hardDrop();
-            return true;
-        }
-        if (matches(key, "ArrowUp", "x", "X")) {
-            engine.rotateCw();
-            return true;
-        }
-        if (matches(key, "z", "Z")) {
-            engine.rotateCcw();
-            return true;
-        }
-        if (matches(key, "c", "C", "Shift")) {
-            engine.hold();
-            return true;
-        }
-        if (matches(key, "w", "W")) {
-            engine.selectDirectionDown();
-            return true;
-        }
-        if (matches(key, "s", "S")) {
-            engine.selectDirectionUp();
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean matches(String key, String... candidates) {
-        for (String c : candidates) {
-            if (c.equals(key)) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 }

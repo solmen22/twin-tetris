@@ -27,13 +27,14 @@ public final class WebMain {
     private final CanvasRenderer renderer;
     private final HudView hud;
     private final WebKeyboardController keyboardController;
+    private final SettingsStore settings;
+    private final SettingsView settingsView;
 
     private GameEngine engine;
     private GameMode currentMode;
     private double lastTimestamp = -1.0;
     private boolean running = false;
     private boolean gameOverShown = false;
-    private long bestScore = 0L;
 
     private WebMain() {
         this.document = Window.current().getDocument();
@@ -46,7 +47,9 @@ public final class WebMain {
         HTMLCanvasElement boardCanvas = (HTMLCanvasElement) document.getElementById("board-canvas");
         this.renderer = new CanvasRenderer(boardCanvas);
         this.hud = new HudView(document);
-        this.keyboardController = new WebKeyboardController(() -> engine, this::restartGame);
+        this.settings = new SettingsStore();
+        this.settingsView = new SettingsView(document, settings, this::showMenu);
+        this.keyboardController = new WebKeyboardController(() -> engine, this::restartGame, settings);
 
         wireMenu();
         wireGameOverButtons();
@@ -62,6 +65,11 @@ public final class WebMain {
         bindModeButton("mode-random", GameMode.RANDOM);
         bindModeButton("mode-alternating", GameMode.ALTERNATING);
         bindModeButton("mode-user-choice", GameMode.USER_CHOICE);
+
+        HTMLElement settingsBtn = document.getElementById("open-settings");
+        if (settingsBtn != null) {
+            settingsBtn.addEventListener("click", (EventListener<Event>) e -> showSettings());
+        }
     }
 
     private void bindModeButton(String id, GameMode mode) {
@@ -85,8 +93,12 @@ public final class WebMain {
 
     private void wireKeyboard() {
         document.addEventListener("keydown", (EventListener<KeyboardEvent>) event -> {
+            if (settingsView.isCapturing() || settingsView.isVisible()) {
+                return;
+            }
             if (gameOverShown) {
-                if ("r".equals(event.getKey()) || "R".equals(event.getKey())) {
+                Action a = settings.actionForCode(event.getCode());
+                if (a == Action.RESET) {
                     event.preventDefault();
                     restartGame();
                 }
@@ -103,9 +115,17 @@ public final class WebMain {
         engine = null;
         currentMode = null;
         gameOverShown = false;
+        settingsView.hide();
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
         removeClass(menuScreen, "hidden");
+    }
+
+    private void showSettings() {
+        addClass(menuScreen, "hidden");
+        addClass(gameScreen, "hidden");
+        addClass(gameOverOverlay, "hidden");
+        settingsView.show();
     }
 
     private void startGame(GameMode mode) {
@@ -114,6 +134,7 @@ public final class WebMain {
         lastTimestamp = -1.0;
         gameOverShown = false;
         running = true;
+        settingsView.hide();
         addClass(menuScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
         removeClass(gameScreen, "hidden");
@@ -166,9 +187,11 @@ public final class WebMain {
         finalScoreText.setInnerText(
             "Score " + s.points() + "  /  Lv " + s.level() + "  /  Lines " + s.lines()
         );
-        boolean newRecord = s.points() > bestScore && s.points() > 0L;
+        String modeKey = currentMode != null ? currentMode.name() : "DEFAULT";
+        long previousBest = settings.bestScore(modeKey);
+        boolean newRecord = s.points() > previousBest && s.points() > 0L;
         if (newRecord) {
-            bestScore = s.points();
+            settings.recordBestScore(modeKey, s.points());
         }
         if (newRecordBanner != null) {
             if (newRecord) {

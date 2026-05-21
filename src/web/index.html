@@ -24,6 +24,9 @@
                 <span class="mode-desc">W: 下方向 / S: 上方向 を選択</span>
             </button>
         </div>
+        <div class="menu-secondary">
+            <button id="open-settings" class="secondary-button">⚙ 設定 / キーバインド</button>
+        </div>
         <div class="keyhelp">
             <h3>操作</h3>
             <ul>
@@ -73,6 +76,26 @@
                 <div class="hud-label">LINES</div>
                 <div id="lines-text" class="hud-value">0</div>
             </div>
+        </div>
+    </div>
+
+    <div id="settings" class="screen hidden">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h2>設定 / キーバインド</h2>
+                <p class="settings-hint">アクションの「+ 追加」を押した直後に押したキーがそのアクションに割り当たります。<kbd>Esc</kbd> でキャンセル。</p>
+            </div>
+            <div id="settings-list" class="settings-list"></div>
+            <div class="settings-footer">
+                <button id="settings-reset" class="secondary-button">既定値に戻す</button>
+                <button id="settings-back" class="primary-button">メニューへ戻る</button>
+            </div>
+        </div>
+        <div id="capture-banner" class="capture-banner hidden">
+            <div class="capture-text">
+                <span id="capture-action-label">-</span> に割り当てるキーを押してください…
+            </div>
+            <button id="capture-cancel" class="capture-cancel">キャンセル (Esc)</button>
         </div>
     </div>
 
