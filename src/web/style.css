@@ -206,6 +206,39 @@ kbd {
     color: #cfcfe8;
 }
 
+.final-stats {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 24px;
+    row-gap: 6px;
+    margin: 0 0 18px;
+    padding: 12px 16px;
+    background: #1c1c30;
+    border: 1px solid #2a2a4a;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.final-stats dt {
+    color: #ff66cc;
+    letter-spacing: 1px;
+    font-size: 12px;
+    align-self: center;
+}
+
+.final-stats dd {
+    margin: 0;
+    color: #e8e8f0;
+    font-family: Consolas, "Courier New", monospace;
+    text-align: right;
+}
+
+.final-stats dd.highlight {
+    color: #ffd24a;
+    font-weight: bold;
+}
+
 .new-record {
     color: #ffd24a;
     font-weight: bold;

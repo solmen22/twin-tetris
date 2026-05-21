@@ -22,7 +22,7 @@ public final class WebMain {
     private final HTMLElement menuScreen;
     private final HTMLElement gameScreen;
     private final HTMLElement gameOverOverlay;
-    private final HTMLElement finalScoreText;
+    private final HTMLElement finalStatsList;
     private final HTMLElement newRecordBanner;
     private final CanvasRenderer renderer;
     private final HudView hud;
@@ -41,7 +41,7 @@ public final class WebMain {
         this.menuScreen = document.getElementById("menu");
         this.gameScreen = document.getElementById("game");
         this.gameOverOverlay = document.getElementById("gameover");
-        this.finalScoreText = document.getElementById("final-score");
+        this.finalStatsList = document.getElementById("final-stats");
         this.newRecordBanner = document.getElementById("new-record");
 
         HTMLCanvasElement boardCanvas = (HTMLCanvasElement) document.getElementById("board-canvas");
@@ -184,15 +184,13 @@ public final class WebMain {
 
     private void handleGameOver(GameState state) {
         Score s = state.score();
-        finalScoreText.setInnerText(
-            "Score " + s.points() + "  /  Lv " + s.level() + "  /  Lines " + s.lines()
-        );
         String modeKey = currentMode != null ? currentMode.name() : "DEFAULT";
         long previousBest = settings.bestScore(modeKey);
         boolean newRecord = s.points() > previousBest && s.points() > 0L;
         if (newRecord) {
             settings.recordBestScore(modeKey, s.points());
         }
+        populateFinalStats(state, previousBest, newRecord);
         if (newRecordBanner != null) {
             if (newRecord) {
                 removeClass(newRecordBanner, "hidden");
@@ -202,6 +200,67 @@ public final class WebMain {
         }
         removeClass(gameOverOverlay, "hidden");
         gameOverShown = true;
+    }
+
+    private void populateFinalStats(GameState state, long previousBest, boolean newRecord) {
+        if (finalStatsList == null) {
+            return;
+        }
+        finalStatsList.setInnerHTML("");
+        Score s = state.score();
+        com.example.tetris.game.GameStats stats = state.stats();
+        appendStatRow("SCORE", Long.toString(s.points()), newRecord);
+        appendStatRow("BEST", Long.toString(Math.max(previousBest, s.points())), false);
+        appendStatRow("LEVEL", Integer.toString(s.level()), false);
+        appendStatRow("LINES", Integer.toString(s.lines()), false);
+        appendStatRow("PIECES", Integer.toString(stats.piecesPlaced()), false);
+        appendStatRow("中央崩落", Integer.toString(stats.centerBoundaryClears()), false);
+        appendStatRow("同時崩落", Integer.toString(stats.simultaneousClears()), false);
+        appendStatRow("最大連鎖", Integer.toString(stats.maxChain()), false);
+        appendStatRow("PPS", formatPps(stats.piecesPlaced(), stats.elapsedMs()), false);
+        appendStatRow("TIME", formatDuration(stats.elapsedMs()), false);
+    }
+
+    private void appendStatRow(String label, String value, boolean highlight) {
+        HTMLElement dt = document.createElement("dt");
+        dt.setInnerText(label);
+        HTMLElement dd = document.createElement("dd");
+        dd.setInnerText(value);
+        if (highlight) {
+            dd.setClassName("highlight");
+        }
+        finalStatsList.appendChild(dt);
+        finalStatsList.appendChild(dd);
+    }
+
+    private static String formatDuration(long ms) {
+        if (ms < 0) ms = 0;
+        long totalSeconds = ms / 1000L;
+        long hours = totalSeconds / 3600L;
+        long minutes = (totalSeconds % 3600L) / 60L;
+        long seconds = totalSeconds % 60L;
+        if (hours > 0) {
+            return hours + ":" + pad2(minutes) + ":" + pad2(seconds);
+        }
+        return pad2(minutes) + ":" + pad2(seconds);
+    }
+
+    private static String pad2(long n) {
+        return (n < 10) ? "0" + n : Long.toString(n);
+    }
+
+    private static String formatPps(int pieces, long elapsedMs) {
+        if (elapsedMs <= 0 || pieces <= 0) {
+            return "0.00";
+        }
+        double pps = pieces * 1000.0 / elapsedMs;
+        long whole = (long) pps;
+        long fraction = Math.round((pps - whole) * 100.0);
+        if (fraction >= 100) {
+            whole += 1;
+            fraction -= 100;
+        }
+        return whole + "." + pad2(fraction);
     }
 
     private static void addClass(HTMLElement el, String cls) {
