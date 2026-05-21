@@ -31,6 +31,13 @@ public final class GameEngine {
     private double clearFlashRemainingMs;
     private int clearFlashMultiplier;
 
+    // ランタイム統計(GameStats に集約してスナップショット化する)
+    private int piecesPlaced;
+    private int centerBoundaryClears;
+    private int maxChain;
+    private int simultaneousClears;
+    private long elapsedMs;
+
     public GameEngine(PieceProvider pieceProvider) {
         this(pieceProvider, DirectionStrategy.alwaysDown(), GameMode.RANDOM);
     }
@@ -51,6 +58,11 @@ public final class GameEngine {
         this.gravityAccumulatedMs = 0.0;
         this.inSpawnGrace = false;
         this.spawnGraceRemainingMs = 0.0;
+        this.piecesPlaced = 0;
+        this.centerBoundaryClears = 0;
+        this.maxChain = 0;
+        this.simultaneousClears = 0;
+        this.elapsedMs = 0L;
         spawnFromQueue();
     }
 
@@ -58,6 +70,7 @@ public final class GameEngine {
         if (gameOver || paused || current == null) {
             return;
         }
+        elapsedMs += (long) deltaMs;
         if (inSpawnGrace) {
             spawnGraceRemainingMs -= deltaMs;
             if (spawnGraceRemainingMs <= 0) {
@@ -207,6 +220,7 @@ public final class GameEngine {
         for (Position p : current.cells()) {
             board.place(p, type);
         }
+        piecesPlaced++;
         LineClearService.LineClearResult result = LineClearService.processClears(board);
         if (!result.isEmpty()) {
             int total = result.totalLines();
@@ -215,8 +229,26 @@ public final class GameEngine {
             score = score.addPoints(ScoringService.resultPoints(result, newLevel));
             triggerClearFlash(result);
         }
+        updateStatsForResult(result);
         holdSlot.unlock();
         spawnFromQueue();
+    }
+
+    private void updateStatsForResult(LineClearService.LineClearResult result) {
+        if (result.isEmpty()) {
+            return;
+        }
+        for (LineClearService.CascadeStep step : result.steps()) {
+            if (step.centerCleared()) {
+                centerBoundaryClears++;
+            }
+            if (step.isSimultaneous()) {
+                simultaneousClears++;
+            }
+        }
+        if (result.chainCount() > maxChain) {
+            maxChain = result.chainCount();
+        }
     }
 
     private void spawnFromQueue() {
@@ -271,10 +303,18 @@ public final class GameEngine {
         double progress = clearFlashRemainingMs > 0
             ? clearFlashRemainingMs / CLEAR_FLASH_DURATION_MS
             : 0.0;
+        GameStats stats = new GameStats(
+            piecesPlaced,
+            centerBoundaryClears,
+            maxChain,
+            simultaneousClears,
+            elapsedMs
+        );
         return new GameState(
             board,
             current,
             score,
+            stats,
             gameOver,
             paused,
             mode,

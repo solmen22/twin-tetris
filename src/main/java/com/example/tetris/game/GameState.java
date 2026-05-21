@@ -12,6 +12,7 @@ public record GameState(
     Board board,
     Tetromino currentPiece,
     Score score,
+    GameStats stats,
     boolean gameOver,
     boolean paused,
     GameMode mode,
@@ -25,5 +26,6 @@ public record GameState(
 
     public GameState {
         nextQueue = nextQueue == null ? List.of() : List.copyOf(nextQueue);
+        stats = stats == null ? GameStats.initial() : stats;
     }
 }
