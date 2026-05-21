@@ -58,7 +58,32 @@
             </div>
         </div>
 
-        <canvas id="board-canvas"></canvas>
+        <div class="board-wrapper">
+            <canvas id="board-canvas"></canvas>
+            <div id="touch-controls" class="touch-controls">
+                <div class="tc-top">
+                    <button id="tc-pause" class="tc-mini" type="button" aria-label="ポーズ">⏸</button>
+                    <button id="tc-reset" class="tc-mini" type="button" aria-label="リスタート">⟲</button>
+                    <div class="tc-direction">
+                        <button id="tc-select-down" class="tc-dir" type="button" aria-label="下方向">↓</button>
+                        <button id="tc-select-up" class="tc-dir" type="button" aria-label="上方向">↑</button>
+                    </div>
+                </div>
+                <div class="tc-bottom">
+                    <div class="tc-left">
+                        <button id="tc-move-left" class="tc-btn" type="button" aria-label="左">◀</button>
+                        <button id="tc-soft-drop" class="tc-btn" type="button" aria-label="ソフトドロップ">▼</button>
+                        <button id="tc-move-right" class="tc-btn" type="button" aria-label="右">▶</button>
+                    </div>
+                    <div class="tc-right">
+                        <button id="tc-rotate-ccw" class="tc-btn" type="button" aria-label="左回転">↺</button>
+                        <button id="tc-rotate-cw" class="tc-btn" type="button" aria-label="右回転">↻</button>
+                        <button id="tc-hard-drop" class="tc-btn primary" type="button" aria-label="ハードドロップ">⬇</button>
+                        <button id="tc-hold" class="tc-btn" type="button" aria-label="ホールド">H</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="side-panel right">
             <div class="hud-block">

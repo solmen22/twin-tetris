@@ -30,6 +30,7 @@ public final class WebMain {
     private final WebKeyboardController keyboardController;
     private final SettingsStore settings;
     private final SettingsView settingsView;
+    private final TouchController touchController;
 
     private GameEngine engine;
     private GameMode currentMode;
@@ -52,6 +53,7 @@ public final class WebMain {
         this.settings = new SettingsStore();
         this.settingsView = new SettingsView(document, settings, this::showMenu);
         this.keyboardController = new WebKeyboardController(() -> engine, this::restartGame, settings);
+        this.touchController = new TouchController(document, () -> engine, this::restartGame);
 
         wireMenu();
         wireGameOverButtons();
