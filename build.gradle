@@ -80,8 +80,167 @@ teavm {
     }
 }
 
+tasks.register('generateIcons') {
+    description = 'Generate PWA PNG icons (192 / 512) and screenshots from the SVG design'
+    group = 'build'
+    doLast {
+        [192, 512].each { int size ->
+            def img = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+            def g = img.createGraphics()
+            try {
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
+                g.setColor(new java.awt.Color(0x08, 0x08, 0x1a))
+                g.fillRect(0, 0, size, size)
+                g.setColor(new java.awt.Color(0xff, 0x66, 0xcc))
+                double s = size / 512.0d
+                int r = (int)(4 * s)
+                int blk = (int)(96 * s)
+                g.fillRoundRect((int)(96 * s),  (int)(80 * s),  blk, blk, r, r)
+                g.fillRoundRect((int)(96 * s),  (int)(176 * s), blk, blk, r, r)
+                g.fillRoundRect((int)(192 * s), (int)(176 * s), blk, blk, r, r)
+                g.fillRoundRect((int)(320 * s), (int)(336 * s), blk, blk, r, r)
+                g.fillRoundRect((int)(320 * s), (int)(240 * s), blk, blk, r, r)
+                g.fillRoundRect((int)(224 * s), (int)(240 * s), blk, blk, r, r)
+                float[] dashPattern = [(float)(16 * s), (float)(10 * s)] as float[]
+                def stroke = new java.awt.BasicStroke(
+                    (float)(4 * s),
+                    java.awt.BasicStroke.CAP_BUTT,
+                    java.awt.BasicStroke.JOIN_MITER,
+                    10.0f,
+                    dashPattern,
+                    0.0f
+                )
+                g.setStroke(stroke)
+                g.setColor(new java.awt.Color(0xff, 0x66, 0xcc, 217))
+                g.drawLine(0, (int)(size / 2), size, (int)(size / 2))
+            } finally {
+                g.dispose()
+            }
+            def outFile = file("src/web/icon-${size}.png")
+            javax.imageio.ImageIO.write(img, "PNG", outFile)
+            println "Generated ${outFile}"
+        }
+
+        // ----- Screenshots (for richer PWA install UI) -----
+        def BG    = new java.awt.Color(0x08, 0x08, 0x1a)
+        def PANEL = new java.awt.Color(0x10, 0x10, 0x20)
+        def BORDER = new java.awt.Color(0x2a, 0x2a, 0x4a)
+        def CENTER = new java.awt.Color(0x2a, 0x1d, 0x3a)
+        def PINK  = new java.awt.Color(0xff, 0x66, 0xcc)
+        def TEXT  = new java.awt.Color(0xe8, 0xe8, 0xf0)
+        def DIM   = new java.awt.Color(0xb9, 0xb9, 0xd4)
+
+        def pieces = [
+            // [color, [[r,c], [r,c], ...]] — relative to (rowOff, colOff)
+            [new java.awt.Color(0xff, 0xd2, 0x4a), [[0,0],[0,1],[1,0],[1,1]]],   // O
+            [new java.awt.Color(0xae, 0x66, 0xff), [[0,1],[1,0],[1,1],[1,2]]],   // T
+            [new java.awt.Color(0x66, 0xc8, 0xff), [[0,0],[0,1],[0,2],[0,3]]],   // I
+            [new java.awt.Color(0x66, 0xff, 0xae), [[0,1],[0,2],[1,0],[1,1]]],   // S
+            [new java.awt.Color(0xff, 0xa6, 0x66), [[0,0],[1,0],[1,1],[1,2]]]    // L
+        ]
+
+        def renderScreenshot = { int w, int h, String outName ->
+            def img = new java.awt.image.BufferedImage(w, h, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+            def g = img.createGraphics()
+            try {
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
+                g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+
+                // Background
+                g.setColor(BG)
+                g.fillRect(0, 0, w, h)
+
+                int marginTop = (int)(h * 0.08)
+
+                // Title
+                int titleSize = (int)(Math.min((double)w, h * 1.4d) * 0.06d)
+                g.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, titleSize))
+                g.setColor(PINK)
+                def fm = g.getFontMetrics()
+                def title = "Bidirectional Tetris"
+                int titleX = (w - fm.stringWidth(title)) / 2
+                g.drawString(title, titleX, marginTop + fm.getAscent())
+
+                // Subtitle
+                int subSize = (int)(titleSize * 0.45)
+                g.setFont(new java.awt.Font("Dialog", java.awt.Font.PLAIN, subSize))
+                g.setColor(DIM)
+                fm = g.getFontMetrics()
+                def sub = "中央基準の双方向重力テトリス"
+                int subX = (w - fm.stringWidth(sub)) / 2
+                int subY = marginTop + titleSize + subSize + 4
+                g.drawString(sub, subX, subY)
+
+                // Board mockup (centered)
+                int boardCols = 10
+                int boardRows = 21
+                int availH = (int)(h - subY - h * 0.12)
+                int availW = (int)(w * 0.7)
+                int cellSize = (int)Math.min((double)availH / boardRows, (double)availW / boardCols)
+                int boardW = cellSize * boardCols
+                int boardH = cellSize * boardRows
+                int boardX = (w - boardW) / 2
+                int boardY = subY + (int)(h * 0.04)
+
+                g.setColor(PANEL)
+                g.fillRect(boardX, boardY, boardW, boardH)
+                g.setColor(BORDER)
+                g.setStroke(new java.awt.BasicStroke(2f))
+                g.drawRect(boardX, boardY, boardW, boardH)
+
+                // Center boundary (row 10)
+                int centerY = boardY + cellSize * 10
+                g.setColor(CENTER)
+                g.fillRect(boardX, centerY, boardW, cellSize)
+                float[] dash = [(float)(cellSize * 0.5), (float)(cellSize * 0.35)] as float[]
+                g.setStroke(new java.awt.BasicStroke(2.5f, java.awt.BasicStroke.CAP_BUTT, java.awt.BasicStroke.JOIN_MITER, 10f, dash, 0f))
+                g.setColor(PINK)
+                g.drawLine(boardX, centerY, boardX + boardW, centerY)
+                g.drawLine(boardX, centerY + cellSize, boardX + boardW, centerY + cellSize)
+
+                // Place sample pieces — upper field: O at (3,3), T at (6,5)
+                def drawPiece = { piece, int rowOff, int colOff ->
+                    g.setColor(piece[0])
+                    piece[1].each { rc ->
+                        int r = rc[0] + rowOff
+                        int c = rc[1] + colOff
+                        g.fillRect(boardX + c * cellSize + 1, boardY + r * cellSize + 1, cellSize - 2, cellSize - 2)
+                    }
+                }
+                // Upper field placements
+                drawPiece(pieces[0], 2, 1)   // O
+                drawPiece(pieces[2], 8, 2)   // I (just above center)
+                drawPiece(pieces[1], 5, 4)   // T
+                // Lower field placements
+                drawPiece(pieces[4], 12, 6)  // L (just below center)
+                drawPiece(pieces[3], 16, 1)  // S
+                drawPiece(pieces[0], 18, 6)  // O
+
+                // Bottom hint
+                int hintSize = subSize
+                g.setStroke(new java.awt.BasicStroke(1f))
+                g.setFont(new java.awt.Font("Dialog", java.awt.Font.PLAIN, hintSize))
+                g.setColor(TEXT)
+                fm = g.getFontMetrics()
+                def hint = "中央境界線消去で大連鎖が発火 — Score x5"
+                int hintX = (w - fm.stringWidth(hint)) / 2
+                int hintY = h - (int)(h * 0.05)
+                g.drawString(hint, hintX, hintY)
+            } finally {
+                g.dispose()
+            }
+            def outFile = file("src/web/${outName}")
+            javax.imageio.ImageIO.write(img, "PNG", outFile)
+            println "Generated ${outFile}"
+        }
+
+        renderScreenshot(1280, 720, "screenshot-wide.png")
+        renderScreenshot(720, 1280, "screenshot-narrow.png")
+    }
+}
+
 tasks.register('webDist', Copy) {
-    dependsOn 'generateJavaScript'
+    dependsOn 'generateJavaScript', 'generateIcons'
     from('src/web')
     from(layout.buildDirectory.dir('generated/teavm/js')) {
         include 'tetris.js', 'tetris.js.map'

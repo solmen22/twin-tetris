@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Bidirectional Tetris">
+  <rect width="512" height="512" fill="#08081a"/>
+  <g fill="#ff66cc">
+    <rect x="96" y="80" width="96" height="96" rx="4"/>
+    <rect x="96" y="176" width="96" height="96" rx="4"/>
+    <rect x="192" y="176" width="96" height="96" rx="4"/>
+  </g>
+  <g fill="#ff66cc">
+    <rect x="320" y="336" width="96" height="96" rx="4"/>
+    <rect x="320" y="240" width="96" height="96" rx="4"/>
+    <rect x="224" y="240" width="96" height="96" rx="4"/>
+  </g>
+  <line x1="0" y1="256" x2="512" y2="256" stroke="#ff66cc" stroke-width="4" stroke-dasharray="16 10" opacity="0.85"/>
+</svg>

@@ -1,0 +1,50 @@
+{
+  "name": "Bidirectional Tetris",
+  "short_name": "BiTetris",
+  "id": "/",
+  "description": "中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08081a",
+  "theme_color": "#ff66cc",
+  "orientation": "any",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Bidirectional Tetris — desktop overview"
+    },
+    {
+      "src": "screenshot-narrow.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Bidirectional Tetris — mobile overview"
+    }
+  ]
+}

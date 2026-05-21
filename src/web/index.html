@@ -2,7 +2,19 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ff66cc">
+    <meta name="description" content="中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BiTetris">
     <title>Bidirectional Tetris</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -244,6 +256,11 @@
     window.addEventListener('load', function () {
         if (typeof main === 'function') {
             main([]);
+        }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
+                console.warn('Service worker 登録に失敗しました', err);
+            });
         }
     });
 </script>
