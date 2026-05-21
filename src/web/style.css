@@ -89,6 +89,21 @@ html, body {
     margin-top: 4px;
 }
 
+.mode-best {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #ffd24a;
+    letter-spacing: 1px;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.menu-button.selected {
+    background: #25254a;
+    border-color: #ff66cc;
+    outline: 2px solid rgba(255, 102, 204, 0.4);
+    outline-offset: 2px;
+}
+
 .keyhelp {
     text-align: left;
     background: #14142a;
@@ -112,6 +127,15 @@ html, body {
     font-size: 13px;
     line-height: 1.7;
     color: #cfcfe8;
+}
+
+.keyhelp-nav {
+    margin: 10px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid #2a2a4a;
+    font-size: 11px;
+    color: #b9b9d4;
+    letter-spacing: 1px;
 }
 
 kbd {
@@ -780,4 +804,160 @@ kbd {
     margin-top: 18px;
     display: flex;
     justify-content: center;
+}
+
+/* ---------- Offline badge ---------- */
+.offline-badge {
+    background: #4a2a2a;
+    border: 1px solid #ff5566;
+    color: #ff8aa3;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    align-self: center;
+}
+
+/* ---------- Pause overlay extras ---------- */
+.pause-hint {
+    color: #cfcfe8;
+    font-size: 13px;
+    margin: 0 0 14px;
+}
+
+/* ---------- PWA install button ---------- */
+.install-btn {
+    display: block;
+    margin: 6px auto 14px;
+    background: #2a1d3a;
+    color: #ff66cc;
+    border: 1px solid #ff66cc;
+    border-radius: 6px;
+    padding: 9px 22px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+}
+
+.install-btn:hover {
+    background: #ff66cc;
+    color: #14142a;
+}
+
+/* ---------- Menu footer (legal links) ---------- */
+.menu-footer {
+    margin-top: 18px;
+    font-size: 11px;
+    color: #6a6a8a;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.menu-footer a {
+    color: #b9b9d4;
+    text-decoration: none;
+}
+
+.menu-footer a:hover {
+    color: #ff66cc;
+    text-decoration: underline;
+}
+
+.menu-footer .footer-sep {
+    margin: 0 8px;
+    color: #383866;
+}
+
+/* ---------- Legal pages (terms / privacy) ---------- */
+.legal-page {
+    width: min(760px, 95%);
+    margin: 24px auto;
+    padding: 28px 32px;
+    background: #14142a;
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    color: #cfcfe8;
+    line-height: 1.75;
+    font-size: 14px;
+}
+
+.legal-header {
+    border-bottom: 1px solid #2a2a4a;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+}
+
+.legal-back {
+    color: #b9b9d4;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.legal-back:hover {
+    color: #ff66cc;
+}
+
+.legal-header h1 {
+    margin: 10px 0 4px;
+    color: #ff66cc;
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
+.legal-meta {
+    margin: 0;
+    color: #6a6a8a;
+    font-size: 12px;
+}
+
+.legal-page h2 {
+    color: #ff66cc;
+    font-size: 16px;
+    letter-spacing: 1px;
+    margin: 22px 0 6px;
+}
+
+.legal-page p {
+    margin: 0 0 10px;
+}
+
+.legal-page ul {
+    margin: 0 0 10px;
+    padding-left: 22px;
+}
+
+.legal-page li {
+    margin: 4px 0;
+}
+
+.legal-page strong {
+    color: #ffd24a;
+}
+
+.legal-page a {
+    color: #ff66cc;
+    text-decoration: none;
+}
+
+.legal-page a:hover {
+    text-decoration: underline;
+}
+
+.legal-footer {
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid #2a2a4a;
+    font-size: 12px;
+    color: #6a6a8a;
+    text-align: center;
+}
+
+.legal-footer a {
+    color: #b9b9d4;
+}
+
+.legal-sep {
+    margin: 0 8px;
+    color: #383866;
 }

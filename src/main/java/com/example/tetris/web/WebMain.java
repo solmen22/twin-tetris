@@ -14,6 +14,8 @@ import org.teavm.jso.dom.html.HTMLCanvasElement;
 import org.teavm.jso.dom.html.HTMLDocument;
 import org.teavm.jso.dom.html.HTMLElement;
 
+import java.util.List;
+
 public final class WebMain {
 
     private static WebMain instance;
@@ -23,6 +25,8 @@ public final class WebMain {
     private final HTMLElement gameScreen;
     private final HTMLElement gameOverOverlay;
     private final HTMLElement tutorialScreen;
+    private final HTMLElement pauseOverlay;
+    private final HTMLElement keyhelpList;
     private final HTMLElement finalStatsList;
     private final HTMLElement newRecordBanner;
     private final CanvasRenderer renderer;
@@ -37,6 +41,15 @@ public final class WebMain {
     private double lastTimestamp = -1.0;
     private boolean running = false;
     private boolean gameOverShown = false;
+    private boolean pauseOverlayShown = false;
+    private int selectedMenuIndex = 0;
+
+    private static final GameMode[] MENU_MODES = {
+        GameMode.RANDOM, GameMode.ALTERNATING, GameMode.USER_CHOICE
+    };
+    private static final String[] MENU_MODE_BUTTON_IDS = {
+        "mode-random", "mode-alternating", "mode-user-choice"
+    };
 
     private WebMain() {
         this.document = Window.current().getDocument();
@@ -44,6 +57,8 @@ public final class WebMain {
         this.gameScreen = document.getElementById("game");
         this.gameOverOverlay = document.getElementById("gameover");
         this.tutorialScreen = document.getElementById("tutorial");
+        this.pauseOverlay = document.getElementById("pause-overlay");
+        this.keyhelpList = document.getElementById("keyhelp-list");
         this.finalStatsList = document.getElementById("final-stats");
         this.newRecordBanner = document.getElementById("new-record");
 
@@ -58,6 +73,7 @@ public final class WebMain {
         wireMenu();
         wireGameOverButtons();
         wireTutorialButtons();
+        wirePauseButtons();
         wireKeyboard();
         showMenu();
     }
@@ -88,6 +104,25 @@ public final class WebMain {
         }
     }
 
+    private void wirePauseButtons() {
+        HTMLElement resume = document.getElementById("pause-resume");
+        HTMLElement restart = document.getElementById("pause-restart");
+        HTMLElement toMenu = document.getElementById("pause-to-menu");
+        if (resume != null) {
+            resume.addEventListener("click", (EventListener<Event>) e -> {
+                if (engine != null) {
+                    engine.togglePause();
+                }
+            });
+        }
+        if (restart != null) {
+            restart.addEventListener("click", (EventListener<Event>) e -> restartGame());
+        }
+        if (toMenu != null) {
+            toMenu.addEventListener("click", (EventListener<Event>) e -> showMenu());
+        }
+    }
+
     private void bindModeButton(String id, GameMode mode) {
         HTMLElement btn = document.getElementById(id);
         if (btn == null) {
@@ -112,6 +147,10 @@ public final class WebMain {
             if (settingsView.isCapturing() || settingsView.isVisible()) {
                 return;
             }
+            if (isMenuVisible()) {
+                handleMenuKey(event);
+                return;
+            }
             if (gameOverShown) {
                 Action a = settings.actionForCode(event.getCode());
                 if (a == Action.RESET) {
@@ -126,16 +165,118 @@ public final class WebMain {
         });
     }
 
+    private boolean isMenuVisible() {
+        if (menuScreen == null) return false;
+        String cls = menuScreen.getClassName();
+        return cls == null || !(" " + cls + " ").contains(" hidden ");
+    }
+
+    private void handleMenuKey(KeyboardEvent event) {
+        String code = event.getCode();
+        if ("ArrowDown".equals(code)) {
+            event.preventDefault();
+            selectedMenuIndex = (selectedMenuIndex + 1) % MENU_MODES.length;
+            updateMenuSelection();
+        } else if ("ArrowUp".equals(code)) {
+            event.preventDefault();
+            selectedMenuIndex = (selectedMenuIndex + MENU_MODES.length - 1) % MENU_MODES.length;
+            updateMenuSelection();
+        }
+    }
+
+    private void updateMenuSelection() {
+        for (int i = 0; i < MENU_MODE_BUTTON_IDS.length; i++) {
+            HTMLElement btn = document.getElementById(MENU_MODE_BUTTON_IDS[i]);
+            if (btn == null) continue;
+            if (i == selectedMenuIndex) {
+                addClass(btn, "selected");
+                btn.focus();
+            } else {
+                removeClass(btn, "selected");
+            }
+        }
+    }
+
+    private void refreshMenuBestScores() {
+        for (int i = 0; i < MENU_MODE_BUTTON_IDS.length; i++) {
+            HTMLElement btn = document.getElementById(MENU_MODE_BUTTON_IDS[i]);
+            if (btn == null) continue;
+            String modeKey = MENU_MODES[i].name();
+            long best = settings.bestScore(modeKey);
+            HTMLElement span = btn.querySelector(".mode-best");
+            if (span != null) {
+                span.setInnerText(best > 0L ? "Best: " + best : "Best: -");
+            }
+        }
+    }
+
+    private void refreshKeyhelp() {
+        if (keyhelpList == null) return;
+        keyhelpList.setInnerHTML("");
+        appendKeyhelpRow("左右移動", Action.MOVE_LEFT, Action.MOVE_RIGHT);
+        appendKeyhelpRow("ソフトドロップ", Action.SOFT_DROP);
+        appendKeyhelpRow("ハードドロップ", Action.HARD_DROP);
+        appendKeyhelpRow("回転 (右 / 左)", Action.ROTATE_CW, Action.ROTATE_CCW);
+        appendKeyhelpRow("ホールド", Action.HOLD);
+        appendKeyhelpRow("方向選択 (USER CHOICE)", Action.SELECT_DOWN, Action.SELECT_UP);
+        appendKeyhelpRow("ポーズ / リスタート", Action.PAUSE, Action.RESET);
+    }
+
+    private void appendKeyhelpRow(String label, Action... actions) {
+        HTMLElement li = document.createElement("li");
+        StringBuilder kbds = new StringBuilder();
+        boolean first = true;
+        for (Action a : actions) {
+            List<String> codes = settings.codesFor(a);
+            if (codes == null) continue;
+            for (String c : codes) {
+                if (!first) kbds.append(" ");
+                first = false;
+                kbds.append("<kbd>")
+                    .append(escapeHtml(SettingsStore.displayLabel(c)))
+                    .append("</kbd>");
+            }
+            if (actions.length > 1 && a != actions[actions.length - 1]) {
+                kbds.append(" / ");
+            }
+        }
+        kbds.append(" ").append(escapeHtml(label));
+        li.setInnerHTML(kbds.toString());
+        keyhelpList.appendChild(li);
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '&' -> sb.append("&amp;");
+                case '<' -> sb.append("&lt;");
+                case '>' -> sb.append("&gt;");
+                case '"' -> sb.append("&quot;");
+                case '\'' -> sb.append("&#39;");
+                default -> sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     private void showMenu() {
         running = false;
         engine = null;
         currentMode = null;
         gameOverShown = false;
+        pauseOverlayShown = false;
         settingsView.hide();
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
         addClass(tutorialScreen, "hidden");
+        addClass(pauseOverlay, "hidden");
         removeClass(menuScreen, "hidden");
+        refreshMenuBestScores();
+        refreshKeyhelp();
+        updateMenuSelection();
     }
 
     private void showSettings() {
@@ -143,6 +284,7 @@ public final class WebMain {
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
         addClass(tutorialScreen, "hidden");
+        addClass(pauseOverlay, "hidden");
         settingsView.show();
     }
 
@@ -150,6 +292,7 @@ public final class WebMain {
         addClass(menuScreen, "hidden");
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
+        addClass(pauseOverlay, "hidden");
         settingsView.hide();
         removeClass(tutorialScreen, "hidden");
     }
@@ -159,11 +302,13 @@ public final class WebMain {
         engine = newEngine(mode);
         lastTimestamp = -1.0;
         gameOverShown = false;
+        pauseOverlayShown = false;
         running = true;
         settingsView.hide();
         addClass(menuScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
         addClass(tutorialScreen, "hidden");
+        addClass(pauseOverlay, "hidden");
         removeClass(gameScreen, "hidden");
         Window.requestAnimationFrame(this::frame);
     }
@@ -206,7 +351,19 @@ public final class WebMain {
             handleGameOver(state);
             return;
         }
+        updatePauseOverlay(state.paused());
         Window.requestAnimationFrame(this::frame);
+    }
+
+    private void updatePauseOverlay(boolean paused) {
+        if (pauseOverlay == null) return;
+        if (paused && !pauseOverlayShown) {
+            removeClass(pauseOverlay, "hidden");
+            pauseOverlayShown = true;
+        } else if (!paused && pauseOverlayShown) {
+            addClass(pauseOverlay, "hidden");
+            pauseOverlayShown = false;
+        }
     }
 
     private void handleGameOver(GameState state) {

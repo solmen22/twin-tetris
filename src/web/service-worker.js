@@ -1,12 +1,14 @@
 // Bidirectional Tetris — offline cache service worker
 // Bump CACHE_VERSION whenever any cached asset changes so that returning users
 // pick up the new build on next activation.
-const CACHE_VERSION = 'v4-2026-05-21';
+const CACHE_VERSION = 'v6-2026-05-21';
 const CACHE_NAME = `bidirectional-tetris-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
     './',
     './index.html',
+    './terms.html',
+    './privacy.html',
     './style.css',
     './tetris.js',
     './manifest.webmanifest',

@@ -20,20 +20,24 @@
 <body>
 <div id="app">
     <div id="menu" class="screen">
+        <div id="offline-badge" class="offline-badge hidden">オフライン</div>
         <h1>Bidirectional Tetris</h1>
         <p class="subtitle">中央基準の双方向重力テトリス</p>
         <div class="menu-buttons">
-            <button id="mode-random" class="menu-button">
+            <button id="mode-random" class="menu-button" data-mode="RANDOM">
                 <span class="mode-name">RANDOM</span>
                 <span class="mode-desc">上下からランダムにミノが出現</span>
+                <span class="mode-best" data-best="RANDOM">Best: -</span>
             </button>
-            <button id="mode-alternating" class="menu-button">
+            <button id="mode-alternating" class="menu-button" data-mode="ALTERNATING">
                 <span class="mode-name">ALTERNATING</span>
                 <span class="mode-desc">上下から交互にミノが出現</span>
+                <span class="mode-best" data-best="ALTERNATING">Best: -</span>
             </button>
-            <button id="mode-user-choice" class="menu-button">
+            <button id="mode-user-choice" class="menu-button" data-mode="USER_CHOICE">
                 <span class="mode-name">USER CHOICE</span>
                 <span class="mode-desc">W: 下方向 / S: 上方向 を選択</span>
+                <span class="mode-best" data-best="USER_CHOICE">Best: -</span>
             </button>
         </div>
         <div class="menu-secondary">
@@ -41,16 +45,17 @@
             <button id="open-settings" class="secondary-button">⚙ 設定 / キーバインド</button>
         </div>
         <div class="keyhelp">
-            <h3>操作</h3>
-            <ul>
-                <li><kbd>←</kbd> / <kbd>→</kbd> 左右移動</li>
-                <li><kbd>↓</kbd> ソフトドロップ</li>
-                <li><kbd>Space</kbd> ハードドロップ</li>
-                <li><kbd>↑</kbd> / <kbd>X</kbd> 右回転 / <kbd>Z</kbd> 左回転</li>
-                <li><kbd>C</kbd> / <kbd>Shift</kbd> Hold</li>
-                <li><kbd>W</kbd> / <kbd>S</kbd> 方向選択 (USER CHOICE モード)</li>
-                <li><kbd>P</kbd> / <kbd>Esc</kbd> ポーズ / <kbd>R</kbd> リスタート</li>
-            </ul>
+            <h3>現在のキー割当</h3>
+            <ul id="keyhelp-list"></ul>
+            <p class="keyhelp-nav">メニュー: <kbd>↑</kbd> <kbd>↓</kbd> 選択 / <kbd>Enter</kbd> 開始</p>
+        </div>
+        <button id="install-pwa" class="install-btn hidden" type="button">📲 アプリとしてインストール</button>
+        <div class="menu-footer">
+            <a href="terms.html">利用規約</a>
+            <span class="footer-sep">|</span>
+            <a href="privacy.html">プライバシーポリシー</a>
+            <span class="footer-sep">|</span>
+            <a href="https://github.com/solmen22/twin-tetris" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
     </div>
 
@@ -238,6 +243,18 @@
         </div>
     </div>
 
+    <div id="pause-overlay" class="overlay hidden">
+        <div class="overlay-inner">
+            <h2>PAUSED</h2>
+            <p class="pause-hint">休憩中。再開ボタンで続行できます。</p>
+            <div class="overlay-buttons">
+                <button id="pause-resume" type="button">再開</button>
+                <button id="pause-restart" type="button">リスタート</button>
+                <button id="pause-to-menu" type="button">メニューへ</button>
+            </div>
+        </div>
+    </div>
+
     <div id="gameover" class="overlay hidden">
         <div class="overlay-inner">
             <h2>GAME OVER</h2>
@@ -262,6 +279,38 @@
                 console.warn('Service worker 登録に失敗しました', err);
             });
         }
+        var deferredPrompt = null;
+        var installBtn = document.getElementById('install-pwa');
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+        if (installBtn) {
+            installBtn.addEventListener('click', function () {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.finally(function () {
+                    deferredPrompt = null;
+                    installBtn.classList.add('hidden');
+                });
+            });
+        }
+        window.addEventListener('appinstalled', function () {
+            if (installBtn) installBtn.classList.add('hidden');
+        });
+        var offlineBadge = document.getElementById('offline-badge');
+        function updateOnlineStatus() {
+            if (!offlineBadge) return;
+            if (navigator.onLine) {
+                offlineBadge.classList.add('hidden');
+            } else {
+                offlineBadge.classList.remove('hidden');
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
     });
 </script>
 </body>
