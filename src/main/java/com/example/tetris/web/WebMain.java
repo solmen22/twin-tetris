@@ -22,6 +22,7 @@ public final class WebMain {
     private final HTMLElement menuScreen;
     private final HTMLElement gameScreen;
     private final HTMLElement gameOverOverlay;
+    private final HTMLElement tutorialScreen;
     private final HTMLElement finalStatsList;
     private final HTMLElement newRecordBanner;
     private final CanvasRenderer renderer;
@@ -41,6 +42,7 @@ public final class WebMain {
         this.menuScreen = document.getElementById("menu");
         this.gameScreen = document.getElementById("game");
         this.gameOverOverlay = document.getElementById("gameover");
+        this.tutorialScreen = document.getElementById("tutorial");
         this.finalStatsList = document.getElementById("final-stats");
         this.newRecordBanner = document.getElementById("new-record");
 
@@ -53,6 +55,7 @@ public final class WebMain {
 
         wireMenu();
         wireGameOverButtons();
+        wireTutorialButtons();
         wireKeyboard();
         showMenu();
     }
@@ -69,6 +72,17 @@ public final class WebMain {
         HTMLElement settingsBtn = document.getElementById("open-settings");
         if (settingsBtn != null) {
             settingsBtn.addEventListener("click", (EventListener<Event>) e -> showSettings());
+        }
+        HTMLElement tutorialBtn = document.getElementById("open-tutorial");
+        if (tutorialBtn != null) {
+            tutorialBtn.addEventListener("click", (EventListener<Event>) e -> showTutorial());
+        }
+    }
+
+    private void wireTutorialButtons() {
+        HTMLElement back = document.getElementById("tutorial-back");
+        if (back != null) {
+            back.addEventListener("click", (EventListener<Event>) e -> showMenu());
         }
     }
 
@@ -118,6 +132,7 @@ public final class WebMain {
         settingsView.hide();
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
+        addClass(tutorialScreen, "hidden");
         removeClass(menuScreen, "hidden");
     }
 
@@ -125,7 +140,16 @@ public final class WebMain {
         addClass(menuScreen, "hidden");
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
+        addClass(tutorialScreen, "hidden");
         settingsView.show();
+    }
+
+    private void showTutorial() {
+        addClass(menuScreen, "hidden");
+        addClass(gameScreen, "hidden");
+        addClass(gameOverOverlay, "hidden");
+        settingsView.hide();
+        removeClass(tutorialScreen, "hidden");
     }
 
     private void startGame(GameMode mode) {
@@ -137,6 +161,7 @@ public final class WebMain {
         settingsView.hide();
         addClass(menuScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
+        addClass(tutorialScreen, "hidden");
         removeClass(gameScreen, "hidden");
         Window.requestAnimationFrame(this::frame);
     }

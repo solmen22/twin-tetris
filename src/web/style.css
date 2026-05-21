@@ -454,3 +454,153 @@ kbd {
     background: #25254a;
     border-color: #ff66cc;
 }
+
+/* ---------- Tutorial screen ---------- */
+#tutorial {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.tutorial-panel {
+    width: min(780px, 95%);
+    background: #14142a;
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 24px 28px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.tutorial-header h2 {
+    margin: 0 0 6px;
+    color: #ff66cc;
+    font-size: 22px;
+    letter-spacing: 2px;
+}
+
+.tutorial-hint {
+    margin: 0 0 18px;
+    font-size: 12px;
+    color: #b9b9d4;
+}
+
+.tutorial-body {
+    overflow-y: auto;
+    padding-right: 6px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #cfcfe8;
+}
+
+.tutorial-section {
+    background: #1c1c30;
+    border: 1px solid #2a2a4a;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+}
+
+.tutorial-section.featured {
+    border-color: #ff66cc;
+    background: #221839;
+}
+
+.tutorial-section h3 {
+    margin: 0 0 8px;
+    color: #ff66cc;
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
+.tutorial-section p {
+    margin: 0 0 8px;
+}
+
+.tutorial-section ul,
+.tutorial-section .key-list,
+.tutorial-section .mode-list {
+    margin: 0 0 4px;
+    padding-left: 20px;
+}
+
+.tutorial-section li {
+    margin: 4px 0;
+}
+
+.tutorial-section strong {
+    color: #ffd24a;
+}
+
+.tutorial-section .callout {
+    background: #0d0d1c;
+    border: 1px dashed #ff66cc;
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin-top: 8px;
+    color: #ffd24a;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.board-diagram {
+    display: flex;
+    flex-direction: column;
+    margin: 10px 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #383866;
+}
+
+.board-cell {
+    padding: 14px;
+    text-align: center;
+    background: #181828;
+    color: #cfcfe8;
+}
+
+.board-cell.label {
+    background: #1c1c30;
+    font-size: 13px;
+}
+
+.board-cell.boundary {
+    background: #2a1d3a;
+    color: #ff66cc;
+    border-top: 2px solid #ff66cc;
+    border-bottom: 2px solid #ff66cc;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.diagram-arrow {
+    color: #b9b9d4;
+    font-size: 12px;
+}
+
+.scoring-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0;
+    font-size: 13px;
+}
+
+.scoring-table th,
+.scoring-table td {
+    border: 1px solid #2a2a4a;
+    padding: 6px 10px;
+    text-align: left;
+}
+
+.scoring-table th {
+    background: #0d0d1c;
+    color: #ff66cc;
+    letter-spacing: 1px;
+}
+
+.tutorial-footer {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+}

@@ -25,6 +25,7 @@
             </button>
         </div>
         <div class="menu-secondary">
+            <button id="open-tutorial" class="secondary-button">📖 遊び方 / チュートリアル</button>
             <button id="open-settings" class="secondary-button">⚙ 設定 / キーバインド</button>
         </div>
         <div class="keyhelp">
@@ -75,6 +76,107 @@
             <div class="hud-block">
                 <div class="hud-label">LINES</div>
                 <div id="lines-text" class="hud-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorial" class="screen hidden">
+        <div class="tutorial-panel">
+            <div class="tutorial-header">
+                <h2>遊び方ガイド</h2>
+                <p class="tutorial-hint">双方向重力テトリスの独自ルールを最短で理解するためのガイドです。</p>
+            </div>
+            <div class="tutorial-body">
+                <section class="tutorial-section">
+                    <h3>1. このゲームについて</h3>
+                    <p>双方向重力テトリスは、盤面の<strong>中央に境界線</strong>を挟んで上下から同時にミノが現れる新しいテトリスです。
+                        上下の盤面が独立して振る舞いつつ、中央境界線で噛み合って大連鎖が発火します。</p>
+                    <div class="board-diagram">
+                        <div class="board-cell label">UPPER FIELD<br><span class="diagram-arrow">↓ DOWN ミノが落下</span></div>
+                        <div class="board-cell boundary">中央境界線 (CENTER ROW)</div>
+                        <div class="board-cell label">LOWER FIELD<br><span class="diagram-arrow">↑ UP ミノが上昇</span></div>
+                    </div>
+                </section>
+
+                <section class="tutorial-section">
+                    <h3>2. 基本操作</h3>
+                    <p>キーは <strong>設定 / キーバインド</strong> 画面で全て変更可能です。以下はデフォルト:</p>
+                    <ul class="key-list">
+                        <li><kbd>←</kbd> <kbd>→</kbd> 左右移動</li>
+                        <li><kbd>↓</kbd> ソフトドロップ(+1pt / セル)</li>
+                        <li><kbd>Space</kbd> ハードドロップ(+2pt / セル、即着地)</li>
+                        <li><kbd>↑</kbd> <kbd>X</kbd> 右回転 / <kbd>Z</kbd> 左回転</li>
+                        <li><kbd>C</kbd> <kbd>Shift</kbd> ホールド</li>
+                        <li><kbd>W</kbd> 下方向を選択 / <kbd>S</kbd> 上方向を選択(USER CHOICE 時)</li>
+                        <li><kbd>P</kbd> <kbd>Esc</kbd> ポーズ / <kbd>R</kbd> リスタート</li>
+                    </ul>
+                </section>
+
+                <section class="tutorial-section">
+                    <h3>3. DOWN ミノと UP ミノ</h3>
+                    <p>盤面には 2 種類のミノが出現します:</p>
+                    <ul>
+                        <li><strong>DOWN ミノ</strong>: 上から落ちてくる。普通のテトリスと同じ感覚で扱える。<kbd>↓</kbd> でソフトドロップは「下方向」に効く。</li>
+                        <li><strong>UP ミノ</strong>: 下から上に向かって「昇って」くる。<kbd>↓</kbd> でソフトドロップは「上方向に加速」する。回転中心や接地判定の方向だけが反転し、操作の概念は同じ。</li>
+                    </ul>
+                </section>
+
+                <section class="tutorial-section">
+                    <h3>4. 3 つのモード</h3>
+                    <ul class="mode-list">
+                        <li><strong>RANDOM</strong>: 各ミノの方向(上/下)がランダムに決まる。一番カオスでスリルがある。</li>
+                        <li><strong>ALTERNATING</strong>: 上下が交互に出現。リズムよく積みたい人向け。</li>
+                        <li><strong>USER CHOICE</strong>: 各ミノの出現直前に <kbd>W</kbd> / <kbd>S</kbd> で方向を選択できる(0.5 秒の猶予あり)。最も戦略的。</li>
+                    </ul>
+                </section>
+
+                <section class="tutorial-section featured">
+                    <h3>5. 中央境界線消去 — ×2 倍率 ⭐</h3>
+                    <p>中央境界線(CENTER ROW)が完全に埋まると、その行が消えると同時に <strong>上下の盤面が中央に向かって 1 段スライド</strong> します。
+                        これがこのゲームの<strong>連鎖の起点</strong>です。中央が消えるとスライドによって新たに埋まった行が現れ、さらに消える…という連鎖が起こります。</p>
+                    <p class="callout">スコア倍率: <strong>2 倍</strong></p>
+                </section>
+
+                <section class="tutorial-section featured">
+                    <h3>6. 上下同時崩落 — ×5 倍率 ⚡⚡</h3>
+                    <p>1 回のロックで <strong>中央 + 上の盤面 + 下の盤面</strong> がすべて同時に消えると、上下同時崩落としてカウントされます。
+                        本作で最も派手な得点源で、決まると爽快感がすごい。</p>
+                    <p class="callout">スコア倍率: <strong>5 倍</strong></p>
+                </section>
+
+                <section class="tutorial-section">
+                    <h3>7. 連鎖ボーナス</h3>
+                    <p>1 回のミノ確定から始まるカスケード(雪崩のような連続消去)が長いほど、終了時にチェインボーナスが加算されます。</p>
+                    <p class="callout">連鎖ボーナス: chain × <strong>50pt</strong></p>
+                </section>
+
+                <section class="tutorial-section">
+                    <h3>8. スコアリングまとめ</h3>
+                    <table class="scoring-table">
+                        <thead><tr><th>消去ライン数</th><th>基本得点(× レベル)</th></tr></thead>
+                        <tbody>
+                            <tr><td>1 ライン</td><td>100</td></tr>
+                            <tr><td>2 ライン</td><td>300</td></tr>
+                            <tr><td>3 ライン</td><td>500</td></tr>
+                            <tr><td>4 ライン (Tetris)</td><td>800</td></tr>
+                            <tr><td>5 ライン以上</td><td>800 + 200 × (超過分)</td></tr>
+                        </tbody>
+                    </table>
+                    <p>これに <strong>中央崩落 ×2</strong> または <strong>同時崩落 ×5</strong> の倍率と、連鎖ボーナスが乗ります。</p>
+                </section>
+
+                <section class="tutorial-section">
+                    <h3>9. 上達のコツ</h3>
+                    <ul>
+                        <li>序盤は上下それぞれを別の盤面として処理して、中央を「揃いそうな状態」に整えていく。</li>
+                        <li>中央境界線を意識して凹凸を作りすぎないように積む。</li>
+                        <li>USER CHOICE モードでは、Hold を活用して欲しい方向のミノを引っ張り出せる。</li>
+                        <li>同時崩落 ×5 はゲーム全体の得点を一気に押し上げる。狙えるなら積極的に。</li>
+                    </ul>
+                </section>
+            </div>
+            <div class="tutorial-footer">
+                <button id="tutorial-back" class="primary-button">メニューへ戻る</button>
             </div>
         </div>
     </div>
