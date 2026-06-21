@@ -362,6 +362,29 @@ class GameEngineTest {
     }
 
     @Test
+    void 方向切替を連打しても落下が止まらずいずれ固定される() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.O),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+        // 小さな経過時間 + 反対方向への切替 を交互に繰り返す(耐久の試み)
+        Direction d = Direction.UP;
+        for (int i = 0; i < 60; i++) {
+            engine.tick(300);
+            if (d == Direction.UP) {
+                engine.selectDirectionUp();
+            } else {
+                engine.selectDirectionDown();
+            }
+            d = d.opposite();
+        }
+        // 重力は切替でリセットされず、ロック再チャージにも上限があるため、
+        // いずれミノは固定されて次へ進む(無限に耐久できない)。
+        assertThat(engine.state().stats().piecesPlaced()).isGreaterThan(0);
+    }
+
+    @Test
     void USER_CHOICE_モードのspawnGraceは500ms経過で終了() {
         GameEngine engine = new GameEngine(
             new TestPieceProvider(TetrominoType.T),

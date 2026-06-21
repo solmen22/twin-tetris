@@ -4,6 +4,7 @@ import com.example.tetris.domain.Board;
 import com.example.tetris.domain.Constants;
 import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Position;
+import com.example.tetris.domain.Rotation;
 import com.example.tetris.domain.Score;
 import com.example.tetris.domain.Tetromino;
 import com.example.tetris.domain.TetrominoType;
@@ -270,10 +271,10 @@ public final class GameEngine {
             if (flipped != null) {
                 current = flipped;
                 currentLower = direction == Direction.UP;
-                gravityAccumulatedMs = 0.0;
-                locking = false;
-                lockTimerMs = 0.0;
-                lockResets = 0;
+                // 重力進行(gravityAccumulatedMs)はリセットしない。高速で切り替えても
+                // 落下タイマーは進み続けるため、切替連打で耐久(落下停止)できない。
+                // 接地中の切替はロック再チャージ上限を消費させ、無限に固定を遅延できないようにする。
+                onPieceManipulated();
             }
         }
     }
@@ -286,18 +287,19 @@ public final class GameEngine {
      */
     private Tetromino flippedPiece(Tetromino piece, Direction newDirection) {
         boolean newLower = newDirection == Direction.UP;
-        int localMin = piece.type().minLocalRow(piece.rotation());
-        int localMax = piece.type().maxLocalRow(piece.rotation());
-        int maxRowAbs = piece.origin().row() + localMax;
-        // 反転後のセル最上行 = (BOARD_HEIGHT-1) - maxRowAbs。origin はそこから localMin 戻す。
-        int targetOriginRow = (Constants.BOARD_HEIGHT - 1) - maxRowAbs - localMin;
+        // ブロックの形も中央線で上下反転させる(= 180° 回転。UP/DOWN の出現時の見え方に一致)。
+        Rotation newRotation = piece.rotation().rotateCw().rotateCw();
+        int oldMaxRowAbs = piece.origin().row() + piece.type().maxLocalRow(piece.rotation());
+        int newLocalMin = piece.type().minLocalRow(newRotation);
+        // 反転後のセル最上行 = (BOARD_HEIGHT-1) - oldMaxRowAbs。origin はそこから newLocalMin 戻す。
+        int targetOriginRow = (Constants.BOARD_HEIGHT - 1) - oldMaxRowAbs - newLocalMin;
         int col = piece.origin().col();
 
         Tetromino best = null;
         int bestDist = Integer.MAX_VALUE;
         for (int row = 0; row < Constants.BOARD_HEIGHT; row++) {
             Tetromino candidate = new Tetromino(
-                piece.type(), new Position(row, col), piece.rotation(), newDirection);
+                piece.type(), new Position(row, col), newRotation, newDirection);
             if (CollisionDetector.collides(board, candidate, newLower)) {
                 continue;
             }
