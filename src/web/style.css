@@ -18,6 +18,20 @@ html, body {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+}
+
+/* キーボード操作時のフォーカスを明示(WCAG 2.4.7) */
+:focus-visible {
+    outline: 2px solid #ff66cc;
+    outline-offset: 2px;
+}
+.username-field input:focus-visible {
+    outline: 2px solid #ff66cc;
+    outline-offset: 1px;
 }
 
 .screen {
@@ -45,8 +59,50 @@ html, body {
 }
 
 #menu .subtitle {
-    margin: 0 0 28px;
+    margin: 0 0 20px;
     color: #b9b9d4;
+}
+
+.username-field {
+    display: flex;
+    flex-direction: column;
+    width: 360px;
+    margin-bottom: 18px;
+    text-align: left;
+    gap: 4px;
+}
+
+.username-field label {
+    font-size: 11px;
+    color: #ff66cc;
+    letter-spacing: 2px;
+}
+
+.username-field input {
+    background: #1c1c30;
+    border: 1px solid #383866;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #e8e8f0;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.username-field input:focus {
+    border-color: #ff66cc;
+    background: #25254a;
+}
+
+.username-status {
+    font-size: 10px;
+    color: #6a6a8a;
+    min-height: 14px;
+    letter-spacing: 1px;
+}
+
+.username-status.saved {
+    color: #66ffae;
 }
 
 .menu-buttons {
@@ -194,7 +250,6 @@ kbd {
 #board-canvas {
     background: #101020;
     border: 2px solid #2a2a4a;
-    image-rendering: pixelated;
     display: block;
     max-width: 100%;
     height: auto;
@@ -960,4 +1015,171 @@ kbd {
 .legal-sep {
     margin: 0 8px;
     color: #383866;
+}
+
+/* ---------- Load error / noscript ---------- */
+.load-error {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #4a2a2a;
+    border-bottom: 1px solid #ff5566;
+    color: #ffd2d2;
+    padding: 14px 18px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ---------- Menu secondary buttons (wrap) ---------- */
+.menu-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+/* ---------- Settings: preferences (sound / handling / display) ---------- */
+.settings-prefs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.settings-section-title {
+    margin: 14px 0 6px;
+    color: #ff66cc;
+    font-size: 13px;
+    letter-spacing: 2px;
+    border-bottom: 1px solid #2a2a4a;
+    padding-bottom: 4px;
+}
+
+.pref-row {
+    grid-template-columns: 1fr auto;
+}
+
+.pref-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.pref-toggle {
+    background: #2a2a4a;
+    color: #b9b9d4;
+    border: 1px solid #44446e;
+    border-radius: 999px;
+    padding: 4px 16px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1px;
+    min-width: 56px;
+}
+
+.pref-toggle.on {
+    background: #ff66cc;
+    color: #14142a;
+    border-color: #ff66cc;
+    font-weight: bold;
+}
+
+.pref-control input[type="range"] {
+    width: 160px;
+    accent-color: #ff66cc;
+    cursor: pointer;
+}
+
+.pref-value {
+    min-width: 54px;
+    text-align: right;
+    color: #ffd24a;
+    font-size: 12px;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+/* ---------- High scores screen ---------- */
+#highscores {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.highscores-panel {
+    width: min(760px, 95%);
+    background: #14142a;
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 24px 28px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.highscores-body {
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.highscore-mode {
+    margin-bottom: 18px;
+}
+
+.highscore-mode h3 {
+    margin: 0 0 8px;
+    color: #ff66cc;
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
+.highscore-empty {
+    color: #6a6a8a;
+    font-size: 13px;
+    margin: 0 0 6px;
+}
+
+.highscore-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.highscore-table th,
+.highscore-table td {
+    border: 1px solid #2a2a4a;
+    padding: 5px 10px;
+    text-align: right;
+}
+
+.highscore-table th {
+    background: #0d0d1c;
+    color: #ff66cc;
+    letter-spacing: 1px;
+    text-align: right;
+}
+
+.highscore-table th:last-child,
+.highscore-table td:last-child,
+.highscore-table th:nth-child(5),
+.highscore-table td:nth-child(5) {
+    text-align: left;
+}
+
+.highscore-table tbody tr:nth-child(1) td {
+    color: #ffd24a;
+    font-weight: bold;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
 }

@@ -1,17 +1,25 @@
-// Bidirectional Tetris — offline cache service worker
-// Bump CACHE_VERSION whenever any cached asset changes so that returning users
-// pick up the new build on next activation.
-const CACHE_VERSION = 'v6-2026-05-21';
+// Bidirectional Tetris — offline cache service worker.
+// Strategy: stale-while-revalidate for all same-origin GETs. The cache is served
+// immediately for speed, but every request also refreshes the cache in the
+// background, so a new deploy is picked up on the next load even if CACHE_VERSION
+// is not bumped (this fixes the previous "permanently stale build" risk).
+const CACHE_VERSION = 'v7-2026-06-21';
 const CACHE_NAME = `bidirectional-tetris-${CACHE_VERSION}`;
 
-const STATIC_ASSETS = [
+// Critical assets must all cache for offline play to work.
+const CRITICAL_ASSETS = [
     './',
     './index.html',
+    './style.css',
+    './sfx.js',
+    './tetris.js',
+    './manifest.webmanifest'
+];
+
+// Optional assets: nice to have offline, but a 404 must not abort installation.
+const OPTIONAL_ASSETS = [
     './terms.html',
     './privacy.html',
-    './style.css',
-    './tetris.js',
-    './manifest.webmanifest',
     './icon.svg',
     './icon-192.png',
     './icon-512.png',
@@ -21,7 +29,12 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+        caches.open(CACHE_NAME).then((cache) =>
+            cache.addAll(CRITICAL_ASSETS).then(() =>
+                // Best-effort: cache optional assets without failing the install.
+                Promise.allSettled(OPTIONAL_ASSETS.map((url) => cache.add(url)))
+            )
+        )
     );
     self.skipWaiting();
 });
@@ -47,25 +60,33 @@ self.addEventListener('fetch', (event) => {
     if (url.origin !== self.location.origin) {
         return;
     }
-    event.respondWith(
-        caches.match(event.request).then((cached) => {
-            if (cached) {
-                return cached;
-            }
-            return fetch(event.request)
-                .then((response) => {
-                    if (response && response.status === 200 && response.type === 'basic') {
-                        const clone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-                    }
-                    return response;
-                })
-                .catch(() => {
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('./index.html');
-                    }
-                    return Response.error();
-                });
-        })
-    );
+    event.respondWith(staleWhileRevalidate(event.request));
 });
+
+async function staleWhileRevalidate(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    const networkFetch = fetch(request)
+        .then((response) => {
+            if (response && response.status === 200 && response.type === 'basic') {
+                cache.put(request, response.clone());
+            }
+            return response;
+        })
+        .catch(() => null);
+    if (cached) {
+        // Serve cache now; the network fetch updates the cache in the background.
+        return cached;
+    }
+    const network = await networkFetch;
+    if (network) {
+        return network;
+    }
+    if (request.mode === 'navigate') {
+        const fallback = await cache.match('./index.html');
+        if (fallback) {
+            return fallback;
+        }
+    }
+    return Response.error();
+}

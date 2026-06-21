@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#ff66cc">
     <meta name="description" content="中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
+    <!-- OGP / Twitter card。デプロイ先が決まったら画像 URL を絶対 URL に置き換えると確実。 -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Bidirectional Tetris">
+    <meta property="og:description" content="中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
+    <meta property="og:image" content="screenshot-wide.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bidirectional Tetris">
+    <meta name="twitter:description" content="中央基準の双方向重力テトリス。中央境界線消去で大連鎖。">
+    <meta name="twitter:image" content="screenshot-wide.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,10 +28,21 @@
 </head>
 <body>
 <div id="app">
+    <noscript>
+        <div class="load-error">このゲームをプレイするには JavaScript を有効にしてください。</div>
+    </noscript>
+    <div id="load-error" class="load-error hidden">
+        ⚠ ゲームの読み込みに失敗しました。通信環境を確認し、ページを再読み込みしてください。
+    </div>
     <div id="menu" class="screen">
         <div id="offline-badge" class="offline-badge hidden">オフライン</div>
         <h1>Bidirectional Tetris</h1>
         <p class="subtitle">中央基準の双方向重力テトリス</p>
+        <div class="username-field">
+            <label for="username-input">ニックネーム</label>
+            <input id="username-input" type="text" maxlength="16" placeholder="未設定(ゲスト)" autocomplete="off" spellcheck="false">
+            <span class="username-status" id="username-status"></span>
+        </div>
         <div class="menu-buttons">
             <button id="mode-random" class="menu-button" data-mode="RANDOM">
                 <span class="mode-name">RANDOM</span>
@@ -42,6 +62,7 @@
         </div>
         <div class="menu-secondary">
             <button id="open-tutorial" class="secondary-button">📖 遊び方 / チュートリアル</button>
+            <button id="open-highscores" class="secondary-button">🏆 ハイスコア</button>
             <button id="open-settings" class="secondary-button">⚙ 設定 / キーバインド</button>
         </div>
         <div class="keyhelp">
@@ -223,12 +244,28 @@
         </div>
     </div>
 
+    <div id="highscores" class="screen hidden">
+        <div class="highscores-panel">
+            <div class="settings-header">
+                <h2>ハイスコア</h2>
+                <p class="settings-hint">この端末に保存されたモード別 Top 10 です(LocalStorage 保存)。</p>
+            </div>
+            <div id="highscores-body" class="highscores-body"></div>
+            <div class="settings-footer">
+                <button id="highscores-clear" class="secondary-button">記録を消去</button>
+                <button id="highscores-back" class="primary-button">メニューへ戻る</button>
+            </div>
+        </div>
+    </div>
+
     <div id="settings" class="screen hidden">
         <div class="settings-panel">
             <div class="settings-header">
-                <h2>設定 / キーバインド</h2>
-                <p class="settings-hint">アクションの「+ 追加」を押した直後に押したキーがそのアクションに割り当たります。<kbd>Esc</kbd> でキャンセル。</p>
+                <h2>設定</h2>
+                <p class="settings-hint">サウンド・操作感・表示を調整できます。キーバインドは各アクションの「+ 追加」を押した直後のキーが割り当たります(<kbd>Esc</kbd> でキャンセル)。</p>
             </div>
+            <div id="settings-prefs" class="settings-prefs"></div>
+            <h3 class="settings-section-title">キーバインド</h3>
             <div id="settings-list" class="settings-list"></div>
             <div class="settings-footer">
                 <button id="settings-reset" class="secondary-button">既定値に戻す</button>
@@ -268,11 +305,16 @@
     </div>
 </div>
 
-<script type="text/javascript" src="tetris.js"></script>
+<script type="text/javascript" src="sfx.js"></script>
+<script type="text/javascript" src="tetris.js"
+        onerror="(function(){var el=document.getElementById('load-error');if(el)el.classList.remove('hidden');})()"></script>
 <script type="text/javascript">
     window.addEventListener('load', function () {
         if (typeof main === 'function') {
             main([]);
+        } else {
+            var loadErr = document.getElementById('load-error');
+            if (loadErr) loadErr.classList.remove('hidden');
         }
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./service-worker.js').catch(function (err) {

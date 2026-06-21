@@ -16,6 +16,7 @@ public final class TouchController {
 
     private final Supplier<GameEngine> engineSupplier;
     private final Runnable restartHandler;
+    private final SoundManager sound;
 
     private int activeRepeatHandle = -1;
     private int activeDelayHandle = -1;
@@ -23,10 +24,12 @@ public final class TouchController {
     public TouchController(
         HTMLDocument document,
         Supplier<GameEngine> engineSupplier,
-        Runnable restartHandler
+        Runnable restartHandler,
+        SoundManager sound
     ) {
         this.engineSupplier = engineSupplier;
         this.restartHandler = restartHandler;
+        this.sound = sound;
 
         HTMLElement container = document.getElementById("touch-controls");
         if (container == null) {
@@ -97,10 +100,10 @@ public final class TouchController {
             case MOVE_LEFT -> engine.moveLeft();
             case MOVE_RIGHT -> engine.moveRight();
             case SOFT_DROP -> engine.softDrop();
-            case HARD_DROP -> engine.hardDrop();
-            case ROTATE_CW -> engine.rotateCw();
-            case ROTATE_CCW -> engine.rotateCcw();
-            case HOLD -> engine.hold();
+            case HARD_DROP -> { engine.hardDrop(); sound.play("harddrop"); }
+            case ROTATE_CW -> { engine.rotateCw(); sound.play("rotate"); }
+            case ROTATE_CCW -> { engine.rotateCcw(); sound.play("rotate"); }
+            case HOLD -> { engine.hold(); sound.play("hold"); }
             case SELECT_DOWN -> engine.selectDirectionDown();
             case SELECT_UP -> engine.selectDirectionUp();
             case PAUSE -> engine.togglePause();
