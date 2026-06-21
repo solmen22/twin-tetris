@@ -38,6 +38,9 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # 可能なら Pages を自動で有効化する(権限があれば設定操作が不要になる)。
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
