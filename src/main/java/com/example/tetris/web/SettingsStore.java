@@ -22,6 +22,7 @@ public final class SettingsStore {
     private static final String KEY_SDF = "tt.sdf";
     private static final String KEY_GHOST = "tt.ghost";
     private static final String KEY_REDUCE_MOTION = "tt.reduceMotion";
+    private static final String KEY_VISITED = "tt.visited";
     public static final int USERNAME_MAX_LENGTH = 16;
 
     public static final int DAS_MIN = 0;
@@ -207,6 +208,14 @@ public final class SettingsStore {
 
     public void setReduceMotion(boolean reduce) {
         setBool(KEY_REDUCE_MOTION, reduce);
+    }
+
+    public boolean isFirstVisit() {
+        return !getBool(KEY_VISITED, false);
+    }
+
+    public void markVisited() {
+        setBool(KEY_VISITED, true);
     }
 
     private static int clamp(int v, int min, int max) {

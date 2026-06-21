@@ -92,6 +92,7 @@ public final class WebMain {
         wireKeyboard();
         wireWindowEvents();
         showMenu();
+        maybeShowFirstRunHint();
     }
 
     public static void main(String[] args) {
@@ -400,7 +401,21 @@ public final class WebMain {
         settingsView.show();
     }
 
+    private void maybeShowFirstRunHint() {
+        if (settings.isFirstVisit()) {
+            HTMLElement tutorialBtn = document.getElementById("open-tutorial");
+            addClass(tutorialBtn, "pulse");
+        }
+    }
+
+    private void clearFirstRunHint() {
+        settings.markVisited();
+        HTMLElement tutorialBtn = document.getElementById("open-tutorial");
+        removeClass(tutorialBtn, "pulse");
+    }
+
     private void showTutorial() {
+        clearFirstRunHint();
         addClass(menuScreen, "hidden");
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
@@ -491,6 +506,7 @@ public final class WebMain {
     private static native String formatDate(double ms);
 
     private void startGame(GameMode mode) {
+        clearFirstRunHint();
         currentMode = mode;
         engine = newEngine(mode);
         lastTimestamp = -1.0;

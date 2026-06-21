@@ -456,12 +456,6 @@ kbd {
     letter-spacing: 4px;
 }
 
-.final-score-line {
-    font-size: 16px;
-    margin-bottom: 14px;
-    color: #cfcfe8;
-}
-
 .final-stats {
     display: grid;
     grid-template-columns: max-content 1fr;
@@ -1181,5 +1175,64 @@ kbd {
     * {
         transition: none !important;
         animation: none !important;
+    }
+}
+
+/* ---------- First-run tutorial nudge ---------- */
+.secondary-button.pulse {
+    border-color: #ff66cc;
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 102, 204, 0.0); }
+    50% { box-shadow: 0 0 0 4px rgba(255, 102, 204, 0.35); }
+}
+
+/* ---------- Landscape / short-viewport (mobile) ---------- */
+@media (max-height: 560px) and (orientation: landscape) {
+    #app {
+        padding: 6px;
+        align-items: flex-start;
+    }
+
+    #game {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .side-panel {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        width: auto;
+        max-width: none;
+        gap: 6px;
+    }
+
+    .side-panel .hud-block {
+        padding: 5px 8px;
+    }
+
+    #board-canvas {
+        width: auto;
+        height: min(88vh, 540px);
+        max-height: 88vh;
+    }
+
+    .board-wrapper {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .touch-controls {
+        max-width: 320px;
+    }
+
+    .tc-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
     }
 }

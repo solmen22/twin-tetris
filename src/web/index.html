@@ -92,12 +92,12 @@
             </div>
             <div class="hud-block">
                 <div class="hud-label">方向</div>
-                <div id="direction-text" class="hud-value">-</div>
+                <div id="direction-text" class="hud-value" aria-live="polite">-</div>
             </div>
         </div>
 
         <div class="board-wrapper">
-            <canvas id="board-canvas"></canvas>
+            <canvas id="board-canvas" aria-label="双方向テトリスの盤面" role="img"></canvas>
             <div id="touch-controls" class="touch-controls">
                 <div class="tc-top">
                     <button id="tc-pause" class="tc-mini" type="button" aria-label="ポーズ">⏸</button>
@@ -280,7 +280,7 @@
         </div>
     </div>
 
-    <div id="pause-overlay" class="overlay hidden">
+    <div id="pause-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="一時停止">
         <div class="overlay-inner">
             <h2>PAUSED</h2>
             <p class="pause-hint">休憩中。再開ボタンで続行できます。</p>
@@ -292,7 +292,7 @@
         </div>
     </div>
 
-    <div id="gameover" class="overlay hidden">
+    <div id="gameover" class="overlay hidden" role="dialog" aria-modal="true" aria-label="ゲームオーバー">
         <div class="overlay-inner">
             <h2>GAME OVER</h2>
             <div id="new-record" class="new-record hidden">★ NEW RECORD ★</div>

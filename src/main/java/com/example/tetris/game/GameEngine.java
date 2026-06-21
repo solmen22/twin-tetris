@@ -257,7 +257,18 @@ public final class GameEngine {
             }
         }
         if (inSpawnGrace && current != null && current.direction() != direction) {
-            spawnPiece(current.type(), direction);
+            // 猶予中の方向反転で再スポーンが衝突する場合は、ゲームオーバーにせず
+            // 現在のミノ・方向を維持する(反転を無効にするだけ)。
+            Tetromino candidate = direction == Direction.DOWN
+                ? Tetromino.spawnDown(current.type())
+                : Tetromino.spawnUp(current.type());
+            if (!CollisionDetector.collides(board, candidate)) {
+                current = candidate;
+                gravityAccumulatedMs = 0.0;
+                locking = false;
+                lockTimerMs = 0.0;
+                lockResets = 0;
+            }
         }
     }
 

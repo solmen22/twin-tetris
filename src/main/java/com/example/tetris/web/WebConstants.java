@@ -3,7 +3,6 @@ package com.example.tetris.web;
 public final class WebConstants {
 
     public static final int CELL_SIZE = 30;
-    public static final int MINI_CELL_SIZE = 22;
 
     public static final String BACKGROUND_COLOR = "#101020";
     public static final String GRID_LINE_COLOR = "#1f2030";

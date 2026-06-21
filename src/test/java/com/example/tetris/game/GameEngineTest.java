@@ -310,6 +310,30 @@ class GameEngineTest {
     }
 
     @Test
+    void USER_CHOICE_grace中の方向反転が衝突する場合はゲームオーバーにならず現在ミノを維持() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+        var board = engine.state().board();
+        // UP ミノのスポーン領域 (rows 19-20, cols 3-6) を埋めておく
+        for (int r = 19; r <= 20; r++) {
+            for (int c = 3; c < 7; c++) {
+                board.place(new Position(r, c), TetrominoType.Z);
+            }
+        }
+        assertThat(engine.state().inSpawnGrace()).isTrue();
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+
+        engine.selectDirectionUp();
+
+        // 反転すると衝突するため、ゲームオーバーにならず DOWN ミノが維持される
+        assertThat(engine.state().gameOver()).isFalse();
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+    }
+
+    @Test
     void USER_CHOICE_モードのspawnGraceは500ms経過で終了() {
         GameEngine engine = new GameEngine(
             new TestPieceProvider(TetrominoType.T),
