@@ -1,7 +1,7 @@
 {
   "name": "Bidirectional Tetris",
   "short_name": "BiTetris",
-  "id": "/",
+  "id": "./",
   "description": "中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。",
   "start_url": "./",
   "scope": "./",
