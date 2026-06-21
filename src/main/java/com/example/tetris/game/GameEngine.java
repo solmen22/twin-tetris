@@ -1,7 +1,6 @@
 package com.example.tetris.game;
 
 import com.example.tetris.domain.Board;
-import com.example.tetris.domain.Constants;
 import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Position;
 import com.example.tetris.domain.Score;
@@ -39,6 +38,9 @@ public final class GameEngine {
     private double lockTimerMs;
     private int lockResets;
     private boolean backToBackActive;
+    // 現在ミノが属する半面(true=下半面)。中央境界の判定に使う。
+    // 通常は向き(UP=下半面)と一致するが、方向切替後も「いた半面」を保持する。
+    private boolean currentLower;
 
     // ランタイム統計(GameStats に集約してスナップショット化する)
     private int piecesPlaced;
@@ -71,6 +73,7 @@ public final class GameEngine {
         this.lockTimerMs = 0.0;
         this.lockResets = 0;
         this.backToBackActive = false;
+        this.currentLower = false;
         this.piecesPlaced = 0;
         this.centerBoundaryClears = 0;
         this.maxChain = 0;
@@ -102,7 +105,7 @@ public final class GameEngine {
         while (gravityAccumulatedMs >= period && !gameOver && current != null) {
             gravityAccumulatedMs -= period;
             Tetromino moved = current.translated(current.direction().rowStep(), 0);
-            if (CollisionDetector.collides(board, moved)) {
+            if (CollisionDetector.collides(board, moved, currentLower)) {
                 // これ以上落下できない。ロックディレイに委ねるため重力消費を止める。
                 gravityAccumulatedMs = 0.0;
                 break;
@@ -140,7 +143,7 @@ public final class GameEngine {
             return false;
         }
         Tetromino moved = current.translated(current.direction().rowStep(), 0);
-        return CollisionDetector.collides(board, moved);
+        return CollisionDetector.collides(board, moved, currentLower);
     }
 
     /** 接地中の移動・回転成功でロックタイマーを再チャージする(上限あり)。 */
@@ -164,7 +167,7 @@ public final class GameEngine {
             return;
         }
         Tetromino moved = current.translated(0, dcol);
-        if (!CollisionDetector.collides(board, moved)) {
+        if (!CollisionDetector.collides(board, moved, currentLower)) {
             current = moved;
             onPieceManipulated();
         }
@@ -176,7 +179,7 @@ public final class GameEngine {
         }
         int step = current.direction().rowStep();
         Tetromino moved = current.translated(step, 0);
-        if (!CollisionDetector.collides(board, moved)) {
+        if (!CollisionDetector.collides(board, moved, currentLower)) {
             current = moved;
             score = score.addPoints(ScoringService.softDropPoints(1));
             gravityAccumulatedMs = 0.0;
@@ -191,7 +194,7 @@ public final class GameEngine {
         int cells = 0;
         while (true) {
             Tetromino moved = current.translated(step, 0);
-            if (CollisionDetector.collides(board, moved)) {
+            if (CollisionDetector.collides(board, moved, currentLower)) {
                 break;
             }
             current = moved;
@@ -205,7 +208,7 @@ public final class GameEngine {
         if (!canActOnPiece()) {
             return;
         }
-        RotationSystem.tryRotateCw(board, current).ifPresent(p -> {
+        RotationSystem.tryRotateCw(board, current, currentLower).ifPresent(p -> {
             current = p;
             onPieceManipulated();
         });
@@ -215,7 +218,7 @@ public final class GameEngine {
         if (!canActOnPiece()) {
             return;
         }
-        RotationSystem.tryRotateCcw(board, current).ifPresent(p -> {
+        RotationSystem.tryRotateCcw(board, current, currentLower).ifPresent(p -> {
             current = p;
             onPieceManipulated();
         });
@@ -257,11 +260,13 @@ public final class GameEngine {
                 ucs.selectUp();
             }
         }
-        // 落下中いつでも、現在のミノを反対側へ即座に切り替える。
-        // 切り替え先が衝突して配置できない場合は何もしない(ゲームオーバーにはしない)。
+        // 落下位置(行・列・回転)はそのまま、重力の向きだけを反転する。
+        // ミノは「いま居る半面」に留まり、中央線は越えない。例えば下半面で中央まで
+        // 上昇したミノを DOWN にすると、その場(中央)から今度は下へ落下し始める。
         if (current != null && current.direction() != direction) {
-            Tetromino flipped = flippedPiece(current, direction);
-            if (flipped != null) {
+            Tetromino flipped = new Tetromino(
+                current.type(), current.origin(), current.rotation(), direction);
+            if (!CollisionDetector.collides(board, flipped, currentLower)) {
                 current = flipped;
                 gravityAccumulatedMs = 0.0;
                 locking = false;
@@ -269,44 +274,6 @@ public final class GameEngine {
                 lockResets = 0;
             }
         }
-    }
-
-    /**
-     * 現在のミノを、指定方向のフィールド(反対側)へ切り替える。
-     * 出現位置(端)へは戻さず、<b>現在の落下位置を中央線で反転した位置</b>に置く
-     * ことで「中央からの深さ」を保つ。横位置も維持する。反転位置が塞がっている
-     * 場合は、そこから最も近い置ける位置を探す。
-     * @return 切り替え後のミノ。配置できる場所が無い場合は null。
-     */
-    private Tetromino flippedPiece(Tetromino piece, Direction newDirection) {
-        Tetromino base = newDirection == Direction.DOWN
-            ? Tetromino.spawnDown(piece.type())
-            : Tetromino.spawnUp(piece.type());
-        // 現在の origin 行を中央線で反転した行を目標にする(落下の深さを保持)。
-        int targetRow = (Constants.BOARD_HEIGHT - 1) - piece.origin().row();
-        Tetromino result = nearestValidPlacement(base, targetRow, piece.origin().col() - base.origin().col());
-        if (result == null) {
-            result = nearestValidPlacement(base, targetRow, 0); // 横位置維持が無理なら中央列
-        }
-        return result;
-    }
-
-    /** base ミノを、目標 origin 行に最も近い「置ける」行へ配置して返す(無ければ null)。 */
-    private Tetromino nearestValidPlacement(Tetromino base, int targetOriginRow, int dcol) {
-        Tetromino best = null;
-        int bestDist = Integer.MAX_VALUE;
-        for (int row = 0; row < Constants.BOARD_HEIGHT; row++) {
-            Tetromino candidate = base.translated(row - base.origin().row(), dcol);
-            if (CollisionDetector.collides(board, candidate)) {
-                continue;
-            }
-            int dist = Math.abs(row - targetOriginRow);
-            if (dist < bestDist) {
-                bestDist = dist;
-                best = candidate;
-            }
-        }
-        return best;
     }
 
     public void togglePause() {
@@ -372,12 +339,15 @@ public final class GameEngine {
         Tetromino piece = direction == Direction.DOWN
             ? Tetromino.spawnDown(type)
             : Tetromino.spawnUp(type);
-        if (CollisionDetector.collides(board, piece)) {
+        // 出現側で半面が決まる: DOWN=上端から=上半面、UP=下端から=下半面。
+        boolean lower = direction == Direction.UP;
+        if (CollisionDetector.collides(board, piece, lower)) {
             gameOver = true;
             current = null;
             return;
         }
         current = piece;
+        currentLower = lower;
         gravityAccumulatedMs = 0.0;
         locking = false;
         lockTimerMs = 0.0;
