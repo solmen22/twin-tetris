@@ -333,29 +333,32 @@ class GameEngineTest {
     }
 
     @Test
-    void USER_CHOICE_方向切替は落下位置_絶対行_を保ち半面に留まる() {
+    void USER_CHOICE_方向切替で中央線を基準にミラー位置へ移る() {
         GameEngine engine = new GameEngine(
             new TestPieceProvider(TetrominoType.O),
             DirectionStrategy.userChoice(),
             GameMode.USER_CHOICE
         );
-        // O ミノ(DOWN, 上半面)を中央まで落とす
-        for (int i = 0; i < 20; i++) {
+        // O ミノ(DOWN, 上半面)を途中まで落とす(中央には到達させない)
+        for (int i = 0; i < 3; i++) {
             engine.softDrop();
         }
         int beforeRow = engine.state().currentPiece().origin().row();
-        // DOWN の O は中央境界線で止まる(origin row 9)
-        assertThat(beforeRow).isEqualTo(Constants.UPPER_FIELD_BOTTOM);
+        assertThat(beforeRow).isLessThan(Constants.CENTER_ROW);
 
         engine.selectDirectionUp();
 
-        // 向きは UP になるが、行(絶対位置)は変わらず、上半面に留まったまま
+        // 向きは UP になり、中央線で反転した対応位置(下半面)へ移動する
         assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.UP);
-        assertThat(engine.state().currentPiece().origin().row()).isEqualTo(beforeRow);
+        int afterRow = engine.state().currentPiece().origin().row();
+        // O のセル上端 = origin。反転後の origin = (BOARD_HEIGHT-1) - (beforeRow + maxLocalRow)
+        int expectedMirror = (Constants.BOARD_HEIGHT - 1) - (beforeRow + 1);
+        assertThat(afterRow).isEqualTo(expectedMirror);
+        assertThat(afterRow).isGreaterThan(Constants.CENTER_ROW); // 下半面へ移った
 
-        // その場(中央)から今度は上へ向かって動く
+        // 移動先から再び中央へ向かって(上へ)進む
         engine.tick(2000);
-        assertThat(engine.state().currentPiece().origin().row()).isLessThan(beforeRow);
+        assertThat(engine.state().currentPiece().origin().row()).isLessThan(afterRow);
     }
 
     @Test

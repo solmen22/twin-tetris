@@ -1,6 +1,7 @@
 package com.example.tetris.game;
 
 import com.example.tetris.domain.Board;
+import com.example.tetris.domain.Constants;
 import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Position;
 import com.example.tetris.domain.Score;
@@ -260,20 +261,53 @@ public final class GameEngine {
                 ucs.selectUp();
             }
         }
-        // 落下位置(行・列・回転)はそのまま、重力の向きだけを反転する。
-        // ミノは「いま居る半面」に留まり、中央線は越えない。例えば下半面で中央まで
-        // 上昇したミノを DOWN にすると、その場(中央)から今度は下へ落下し始める。
+        // 中央線を基準にミラーした位置(反対側の半面・同じ深さ)へ移し、向きを反転する。
+        // 通常落下は中央で止まるため、移動先からは再び中央へ向かって進む。
+        // 例: 下半面で中央近くまで上昇したミノを DOWN にすると、上半面の対応位置に移り
+        //     そこから中央へ向かって落下する。
         if (current != null && current.direction() != direction) {
-            Tetromino flipped = new Tetromino(
-                current.type(), current.origin(), current.rotation(), direction);
-            if (!CollisionDetector.collides(board, flipped, currentLower)) {
+            Tetromino flipped = flippedPiece(current, direction);
+            if (flipped != null) {
                 current = flipped;
+                currentLower = direction == Direction.UP;
                 gravityAccumulatedMs = 0.0;
                 locking = false;
                 lockTimerMs = 0.0;
                 lockResets = 0;
             }
         }
+    }
+
+    /**
+     * 現在のミノを中央線(row {@link Constants#CENTER_ROW})で上下反転した位置へ移す。
+     * 形・列・回転は保ったまま、セルの行範囲を {@code r -> (BOARD_HEIGHT-1) - r} で反転する
+     * (= 中央からの深さを保持して反対側の半面へ)。反転先が塞がっている場合は、その行に
+     * 最も近い「置ける」行を探す。どこにも置けなければ null。
+     */
+    private Tetromino flippedPiece(Tetromino piece, Direction newDirection) {
+        boolean newLower = newDirection == Direction.UP;
+        int localMin = piece.type().minLocalRow(piece.rotation());
+        int localMax = piece.type().maxLocalRow(piece.rotation());
+        int maxRowAbs = piece.origin().row() + localMax;
+        // 反転後のセル最上行 = (BOARD_HEIGHT-1) - maxRowAbs。origin はそこから localMin 戻す。
+        int targetOriginRow = (Constants.BOARD_HEIGHT - 1) - maxRowAbs - localMin;
+        int col = piece.origin().col();
+
+        Tetromino best = null;
+        int bestDist = Integer.MAX_VALUE;
+        for (int row = 0; row < Constants.BOARD_HEIGHT; row++) {
+            Tetromino candidate = new Tetromino(
+                piece.type(), new Position(row, col), piece.rotation(), newDirection);
+            if (CollisionDetector.collides(board, candidate, newLower)) {
+                continue;
+            }
+            int dist = Math.abs(row - targetOriginRow);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = candidate;
+            }
+        }
+        return best;
     }
 
     public void togglePause() {
