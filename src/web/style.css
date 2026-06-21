@@ -1236,3 +1236,96 @@ kbd {
         font-size: 20px;
     }
 }
+
+/* ---------- Interactive tutorial coach overlay ---------- */
+.tutorial-coach {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(560px, 96vw);
+    z-index: 30;
+    background: #14142a;
+    border: 2px solid #ff66cc;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 12px 18px 14px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    margin-top: env(safe-area-inset-top);
+}
+
+.coach-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.coach-step {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #ff66cc;
+    font-weight: bold;
+}
+
+.coach-quit {
+    background: transparent;
+    border: 1px solid #44446e;
+    color: #b9b9d4;
+    border-radius: 6px;
+    padding: 3px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.coach-quit:hover {
+    border-color: #ff5566;
+    color: #ff8aa3;
+}
+
+.coach-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #e8e8f0;
+    min-height: 2.6em;
+}
+
+.coach-text b {
+    color: #ffd24a;
+}
+
+.coach-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.coach-skip {
+    background: #1c1c30;
+    color: #b9b9d4;
+    border: 1px solid #383866;
+    border-radius: 6px;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.coach-skip:hover {
+    border-color: #ff66cc;
+    color: #ff66cc;
+}
+
+.tutorial-footer {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* コーチ表示中は盤面が隠れないよう上に余白を足す */
+.tutorial-coach:not(.hidden) ~ #game {
+    margin-top: 0;
+}

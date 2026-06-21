@@ -102,11 +102,26 @@ public final class SettingsView {
                 sound.play("rotate");
             }
         }));
-        prefsContainer.appendChild(sliderRow("音量", SettingsStore.VOLUME_MIN, SettingsStore.VOLUME_MAX, 5, "%",
+        prefsContainer.appendChild(sliderRow("効果音の音量", SettingsStore.VOLUME_MIN, SettingsStore.VOLUME_MAX, 5, "%",
             settings::soundVolume, v -> {
                 settings.setSoundVolume(v);
                 sound.refresh();
             }, true));
+        prefsContainer.appendChild(toggleRow("BGM", settings.bgmEnabled(), on -> {
+            settings.setBgmEnabled(on);
+            sound.refresh();
+            if (on) {
+                sound.unlock();
+                sound.startBgm();
+            } else {
+                sound.stopBgm();
+            }
+        }));
+        prefsContainer.appendChild(sliderRow("BGM の音量", SettingsStore.VOLUME_MIN, SettingsStore.VOLUME_MAX, 5, "%",
+            settings::bgmVolume, v -> {
+                settings.setBgmVolume(v);
+                sound.refresh();
+            }, false));
 
         prefsContainer.appendChild(sectionTitle("操作(連射)"));
         prefsContainer.appendChild(sliderRow("DAS(初動の遅延)", SettingsStore.DAS_MIN, SettingsStore.DAS_MAX, 1, "ms",

@@ -1,6 +1,11 @@
 package com.example.tetris.web;
 
+import com.example.tetris.domain.Constants;
+import com.example.tetris.domain.Direction;
+import com.example.tetris.domain.Position;
+import com.example.tetris.domain.Rotation;
 import com.example.tetris.domain.Score;
+import com.example.tetris.domain.TetrominoType;
 import com.example.tetris.game.BagGenerator;
 import com.example.tetris.game.DirectionStrategy;
 import com.example.tetris.game.GameEngine;
@@ -10,6 +15,7 @@ import org.teavm.jso.JSBody;
 import org.teavm.jso.browser.Window;
 import org.teavm.jso.dom.events.Event;
 import org.teavm.jso.dom.events.EventListener;
+import org.teavm.jso.dom.events.EventTarget;
 import org.teavm.jso.dom.events.KeyboardEvent;
 import org.teavm.jso.dom.html.HTMLCanvasElement;
 import org.teavm.jso.dom.html.HTMLDocument;
@@ -55,6 +61,25 @@ public final class WebMain {
     private int prevLevel = 1;
     private boolean prevFlashActive = false;
 
+    // 実践チュートリアルの状態。
+    private static final int TUTORIAL_STEPS = 7;
+    private final HTMLElement tutorialCoach;
+    private final HTMLElement coachStep;
+    private final HTMLElement coachText;
+    private boolean tutorialActive = false;
+    private boolean tutorialFinished = false;
+    private boolean tutorialStepGoalMet = false;
+    private int tutorialStepIndex = 0;
+    private double tutorialAdvanceTimerMs = 0.0;
+    private int tutBaseLines = 0;
+    private int tutBaseCenter = 0;
+    private int tutBasePieces = 0;
+    private int tutLastPieces = 0;
+    private int tutMoveCount = 0;
+    private int tutRotateCount = 0;
+    private int tutPrevCol = 0;
+    private Rotation tutPrevRot = Rotation.SPAWN;
+
     private static final GameMode[] MENU_MODES = {
         GameMode.RANDOM, GameMode.ALTERNATING, GameMode.USER_CHOICE
     };
@@ -70,6 +95,9 @@ public final class WebMain {
         this.tutorialScreen = document.getElementById("tutorial");
         this.highscoresScreen = document.getElementById("highscores");
         this.highscoresBody = document.getElementById("highscores-body");
+        this.tutorialCoach = document.getElementById("tutorial-coach");
+        this.coachStep = document.getElementById("coach-step");
+        this.coachText = document.getElementById("coach-text");
         this.pauseOverlay = document.getElementById("pause-overlay");
         this.keyhelpList = document.getElementById("keyhelp-list");
         this.finalStatsList = document.getElementById("final-stats");
@@ -167,6 +195,26 @@ public final class WebMain {
         if (back != null) {
             back.addEventListener("click", (EventListener<Event>) e -> showMenu());
         }
+        HTMLElement startInteractive = document.getElementById("tutorial-start-interactive");
+        if (startInteractive != null) {
+            startInteractive.addEventListener("click", (EventListener<Event>) e -> startInteractiveTutorial());
+        }
+        HTMLElement coachSkip = document.getElementById("coach-skip");
+        if (coachSkip != null) {
+            coachSkip.addEventListener("click", (EventListener<Event>) e -> {
+                if (tutorialActive) {
+                    if (tutorialFinished) {
+                        quitTutorial();
+                    } else {
+                        advanceTutorialStep();
+                    }
+                }
+            });
+        }
+        HTMLElement coachQuit = document.getElementById("coach-quit");
+        if (coachQuit != null) {
+            coachQuit.addEventListener("click", (EventListener<Event>) e -> quitTutorial());
+        }
     }
 
     private void wirePauseButtons() {
@@ -252,6 +300,27 @@ public final class WebMain {
                 autoPause();
             }
         });
+        // UI ボタンのクリック音(ゲーム内タッチボタンは独自 SFX があるため除外)。
+        document.addEventListener("click", (EventListener<Event>) e -> {
+            if (isUiButtonClick(e.getTarget())) {
+                sound.click();
+            }
+        });
+    }
+
+    @JSBody(params = {"target"}, script =
+        "var b = (target && target.closest) ? target.closest('button') : null;"
+        + "if (!b) { return false; }"
+        + "if (b.closest('#touch-controls')) { return false; }"
+        + "return true;")
+    private static native boolean isUiButtonClick(EventTarget target);
+
+    private void manageBgm(GameState state) {
+        if (running && !state.paused() && !state.gameOver()) {
+            sound.startBgm();
+        } else {
+            sound.stopBgm();
+        }
     }
 
     private void autoPause() {
@@ -377,13 +446,16 @@ public final class WebMain {
         currentMode = null;
         gameOverShown = false;
         pauseOverlayShown = false;
+        tutorialActive = false;
         keyboardController.releaseAll();
+        sound.stopBgm();
         sound.refresh();
         settingsView.hide();
         addClass(gameScreen, "hidden");
         addClass(gameOverOverlay, "hidden");
         addClass(tutorialScreen, "hidden");
         addClass(highscoresScreen, "hidden");
+        addClass(tutorialCoach, "hidden");
         addClass(pauseOverlay, "hidden");
         removeClass(menuScreen, "hidden");
         refreshMenuBestScores();
@@ -505,6 +577,212 @@ public final class WebMain {
         + "return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());")
     private static native String formatDate(double ms);
 
+    // ---------- 実践チュートリアル(プレイしながら学ぶ) ----------
+
+    private void startInteractiveTutorial() {
+        clearFirstRunHint();
+        tutorialActive = true;
+        tutorialFinished = false;
+        tutorialStepGoalMet = false;
+        tutorialStepIndex = 0;
+        currentMode = null;
+        lastTimestamp = -1.0;
+        gameOverShown = false;
+        pauseOverlayShown = false;
+        running = true;
+        sound.unlock();
+        sound.refresh();
+        renderer.setGhostEnabled(settings.ghostEnabled());
+        renderer.setReducedMotion(settings.reduceMotion());
+        settingsView.hide();
+        addClass(menuScreen, "hidden");
+        addClass(gameOverOverlay, "hidden");
+        addClass(tutorialScreen, "hidden");
+        addClass(highscoresScreen, "hidden");
+        addClass(pauseOverlay, "hidden");
+        removeClass(gameScreen, "hidden");
+        removeClass(tutorialCoach, "hidden");
+        loadTutorialStep(0);
+        Window.requestAnimationFrame(this::frame);
+    }
+
+    private void loadTutorialStep(int i) {
+        GameEngine e;
+        String text;
+        switch (i) {
+            case 0 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.T, TetrominoType.J, TetrominoType.L),
+                    DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+                text = "ミノを左右に動かそう。<b>← →</b>(画面では ◀ ▶)で移動できます。3 回動かしてみよう。";
+            }
+            case 1 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.T, TetrominoType.S, TetrominoType.Z),
+                    DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+                text = "回転してみよう。<b>↑ または X</b>(↻)でミノが回ります。";
+            }
+            case 2 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.O, TetrominoType.T, TetrominoType.L),
+                    DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+                text = "<b>Space</b>(⬇)でハードドロップ! 一気に落として固定しよう。";
+            }
+            case 3 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.O, TetrominoType.O, TetrominoType.O),
+                    DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+                fillRow(e, Constants.UPPER_FIELD_BOTTOM, 2, 9);
+                text = "横 1 列をそろえると消える! ミノを<b>左端</b>に寄せてハードドロップしよう。";
+            }
+            case 4 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.O, TetrominoType.O, TetrominoType.O),
+                    DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+                fillRow(e, Constants.CENTER_ROW, 0, 7);
+                text = "ピンクの<b>中央ライン</b>をそろえると上下が崩落! ミノを<b>右端</b>に寄せて落とそう。";
+            }
+            case 5 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.T, TetrominoType.L, TetrominoType.J),
+                    DirectionStrategy.userChoice(), GameMode.USER_CHOICE);
+                text = "このゲームは上下から出現! <b>S</b>(↑)を押して“上向き”を選んでみよう。";
+            }
+            case 6 -> {
+                e = new GameEngine(new LoopingPieceProvider(TetrominoType.I, TetrominoType.O, TetrominoType.T, TetrominoType.L),
+                    DirectionStrategy.alwaysDown(), GameMode.RANDOM);
+                text = "<b>C</b>(H)でホールド。ミノを一時保管して後で使えます。使ってみよう。";
+            }
+            default -> {
+                return;
+            }
+        }
+        engine = e;
+        GameState st = engine.state();
+        tutBaseLines = st.score().lines();
+        tutBaseCenter = st.stats().centerBoundaryClears();
+        tutBasePieces = st.stats().piecesPlaced();
+        tutLastPieces = tutBasePieces;
+        tutMoveCount = 0;
+        tutRotateCount = 0;
+        tutPrevCol = st.currentPiece() != null ? st.currentPiece().origin().col() : 0;
+        tutPrevRot = st.currentPiece() != null ? st.currentPiece().rotation() : Rotation.SPAWN;
+        tutorialStepGoalMet = false;
+        tutorialAdvanceTimerMs = 0.0;
+        prevPieces = tutBasePieces;
+        prevLines = tutBaseLines;
+        prevLevel = st.score().level();
+        prevFlashActive = false;
+        keyboardController.releaseAll();
+        updateCoach(i, text);
+    }
+
+    private void fillRow(GameEngine e, int row, int colStart, int colEnd) {
+        var board = e.state().board();
+        for (int c = colStart; c <= colEnd; c++) {
+            board.place(new Position(row, c), TetrominoType.J);
+        }
+    }
+
+    private void updateCoach(int i, String html) {
+        if (coachStep != null) {
+            coachStep.setInnerText("STEP " + (i + 1) + " / " + TUTORIAL_STEPS);
+        }
+        if (coachText != null) {
+            coachText.setInnerHTML(html);
+        }
+    }
+
+    private void handleTutorialFrame(GameState state, double deltaMs) {
+        if (state.gameOver()) {
+            loadTutorialStep(tutorialStepIndex); // 失敗したらステップをやり直す
+            return;
+        }
+        if (tutorialFinished) {
+            tutorialAdvanceTimerMs -= deltaMs;
+            if (tutorialAdvanceTimerMs <= 0) {
+                quitTutorial();
+            }
+            return;
+        }
+        if (tutorialStepGoalMet) {
+            tutorialAdvanceTimerMs -= deltaMs;
+            if (tutorialAdvanceTimerMs <= 0) {
+                advanceTutorialStep();
+            }
+            return;
+        }
+        if (state.currentPiece() != null) {
+            int pieces = state.stats().piecesPlaced();
+            if (pieces != tutLastPieces) {
+                tutLastPieces = pieces;
+                tutPrevCol = state.currentPiece().origin().col();
+                tutPrevRot = state.currentPiece().rotation();
+            } else {
+                int col = state.currentPiece().origin().col();
+                if (col != tutPrevCol) {
+                    tutMoveCount++;
+                    tutPrevCol = col;
+                }
+                Rotation rot = state.currentPiece().rotation();
+                if (rot != tutPrevRot) {
+                    tutRotateCount++;
+                    tutPrevRot = rot;
+                }
+            }
+        }
+        if (tutorialGoalMet(tutorialStepIndex, state)) {
+            tutorialStepGoalMet = true;
+            tutorialAdvanceTimerMs = 1100.0;
+            sound.play("success");
+            if (coachText != null) {
+                coachText.setInnerHTML("✅ できました!");
+            }
+        }
+    }
+
+    private boolean tutorialGoalMet(int i, GameState state) {
+        return switch (i) {
+            case 0 -> tutMoveCount >= 3;
+            case 1 -> tutRotateCount >= 1;
+            case 2 -> state.stats().piecesPlaced() - tutBasePieces >= 1;
+            case 3 -> state.score().lines() - tutBaseLines >= 1;
+            case 4 -> state.stats().centerBoundaryClears() - tutBaseCenter >= 1;
+            case 5 -> state.pendingDirection() == Direction.UP
+                || (state.currentPiece() != null && state.currentPiece().direction() == Direction.UP);
+            case 6 -> state.heldType() != null;
+            default -> false;
+        };
+    }
+
+    private void advanceTutorialStep() {
+        tutorialStepIndex++;
+        if (tutorialStepIndex >= TUTORIAL_STEPS) {
+            finishTutorial();
+            return;
+        }
+        loadTutorialStep(tutorialStepIndex);
+    }
+
+    private void finishTutorial() {
+        tutorialFinished = true;
+        tutorialAdvanceTimerMs = 2800.0;
+        settings.markVisited();
+        if (coachStep != null) {
+            coachStep.setInnerText("完了 🎉");
+        }
+        if (coachText != null) {
+            coachText.setInnerHTML("チュートリアル完了! いつでも本編で試せます。");
+        }
+        sound.play("levelup");
+    }
+
+    private void quitTutorial() {
+        tutorialActive = false;
+        tutorialFinished = false;
+        tutorialStepGoalMet = false;
+        running = false;
+        engine = null;
+        sound.stopBgm();
+        keyboardController.releaseAll();
+        addClass(tutorialCoach, "hidden");
+        showMenu();
+    }
+
     private void startGame(GameMode mode) {
         clearFirstRunHint();
         currentMode = mode;
@@ -567,6 +845,15 @@ public final class WebMain {
         renderer.render(state);
         hud.render(state);
         detectAndPlaySounds(state);
+        manageBgm(state);
+        if (tutorialActive) {
+            handleTutorialFrame(state, deltaMs);
+            updatePauseOverlay(state.paused());
+            if (running) {
+                Window.requestAnimationFrame(this::frame);
+            }
+            return;
+        }
         if (state.gameOver()) {
             running = false;
             handleGameOver(state);
@@ -626,6 +913,7 @@ public final class WebMain {
         int rank = settings.recordHighScore(modeKey, s.points(), s.level(), s.lines(), settings.username());
         boolean newRecord = rank == 1 && s.points() > 0L;
         keyboardController.releaseAll();
+        sound.stopBgm();
         sound.play("gameover");
         populateFinalStats(state, previousBest, newRecord, rank);
         if (newRecordBanner != null) {

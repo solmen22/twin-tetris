@@ -17,6 +17,8 @@ public final class SettingsStore {
     private static final String KEY_USERNAME = "tt.username";
     private static final String KEY_SOUND_ENABLED = "tt.sound.enabled";
     private static final String KEY_SOUND_VOLUME = "tt.sound.volume";
+    private static final String KEY_BGM_ENABLED = "tt.bgm.enabled";
+    private static final String KEY_BGM_VOLUME = "tt.bgm.volume";
     private static final String KEY_DAS = "tt.das";
     private static final String KEY_ARR = "tt.arr";
     private static final String KEY_SDF = "tt.sdf";
@@ -34,6 +36,7 @@ public final class SettingsStore {
     public static final int VOLUME_MIN = 0;
     public static final int VOLUME_MAX = 100;
     public static final int DEFAULT_VOLUME = 45;
+    public static final int DEFAULT_BGM_VOLUME = 22;
     public static final int MAX_HIGH_SCORES = 10;
 
     private final Storage storage;
@@ -168,6 +171,22 @@ public final class SettingsStore {
 
     public void setSoundVolume(int volume) {
         setInt(KEY_SOUND_VOLUME, clamp(volume, VOLUME_MIN, VOLUME_MAX));
+    }
+
+    public boolean bgmEnabled() {
+        return getBool(KEY_BGM_ENABLED, true);
+    }
+
+    public void setBgmEnabled(boolean enabled) {
+        setBool(KEY_BGM_ENABLED, enabled);
+    }
+
+    public int bgmVolume() {
+        return getInt(KEY_BGM_VOLUME, DEFAULT_BGM_VOLUME, VOLUME_MIN, VOLUME_MAX);
+    }
+
+    public void setBgmVolume(int volume) {
+        setInt(KEY_BGM_VOLUME, clamp(volume, VOLUME_MIN, VOLUME_MAX));
     }
 
     public int das() {

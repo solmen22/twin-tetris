@@ -20,6 +20,8 @@ public final class SoundManager {
     public void refresh() {
         setEnabledJs(settings.soundEnabled());
         setVolumeJs(settings.soundVolume() / 100.0);
+        setBgmEnabledJs(settings.bgmEnabled());
+        setBgmVolumeJs(settings.bgmVolume() / 100.0);
     }
 
     /** 自動再生ポリシー対策: ユーザー操作後に AudioContext を起こす。 */
@@ -37,6 +39,22 @@ public final class SoundManager {
         }
     }
 
+    /** UI ボタンのクリック音。 */
+    public void click() {
+        play("click");
+    }
+
+    /** BGM 再生開始(設定で無効なら何もしない。多重呼び出しは安全)。 */
+    public void startBgm() {
+        if (settings.bgmEnabled()) {
+            startBgmJs();
+        }
+    }
+
+    public void stopBgm() {
+        stopBgmJs();
+    }
+
     @JSBody(params = {"name", "arg"}, script = "if (window.TetrisSfx) { window.TetrisSfx.play(name, arg); }")
     private static native void playJs(String name, int arg);
 
@@ -48,4 +66,16 @@ public final class SoundManager {
 
     @JSBody(params = {"v"}, script = "if (window.TetrisSfx) { window.TetrisSfx.setVolume(v); }")
     private static native void setVolumeJs(double v);
+
+    @JSBody(params = {"on"}, script = "if (window.TetrisSfx) { window.TetrisSfx.setBgmEnabled(on); }")
+    private static native void setBgmEnabledJs(boolean on);
+
+    @JSBody(params = {"v"}, script = "if (window.TetrisSfx) { window.TetrisSfx.setBgmVolume(v); }")
+    private static native void setBgmVolumeJs(double v);
+
+    @JSBody(script = "if (window.TetrisSfx) { window.TetrisSfx.startBgm(); }")
+    private static native void startBgmJs();
+
+    @JSBody(script = "if (window.TetrisSfx) { window.TetrisSfx.stopBgm(); }")
+    private static native void stopBgmJs();
 }

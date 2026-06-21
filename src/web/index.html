@@ -143,6 +143,17 @@
         </div>
     </div>
 
+    <div id="tutorial-coach" class="tutorial-coach hidden" role="status" aria-live="polite">
+        <div class="coach-head">
+            <span class="coach-step" id="coach-step">STEP 1 / 7</span>
+            <button id="coach-quit" class="coach-quit" type="button">やめる</button>
+        </div>
+        <div class="coach-text" id="coach-text"></div>
+        <div class="coach-actions">
+            <button id="coach-skip" class="coach-skip" type="button">スキップ ▶</button>
+        </div>
+    </div>
+
     <div id="tutorial" class="screen hidden">
         <div class="tutorial-panel">
             <div class="tutorial-header">
@@ -239,7 +250,8 @@
                 </section>
             </div>
             <div class="tutorial-footer">
-                <button id="tutorial-back" class="primary-button">メニューへ戻る</button>
+                <button id="tutorial-start-interactive" class="primary-button">▶ 実践チュートリアルを始める</button>
+                <button id="tutorial-back" class="secondary-button">メニューへ戻る</button>
             </div>
         </div>
     </div>
