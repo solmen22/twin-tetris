@@ -157,7 +157,7 @@ tasks.register('generateIcons') {
                 g.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, titleSize))
                 g.setColor(PINK)
                 def fm = g.getFontMetrics()
-                def title = "Bidirectional Tetris"
+                def title = "Centerfall"
                 int titleX = (w - fm.stringWidth(title)) / 2
                 g.drawString(title, titleX, marginTop + fm.getAscent())
 
@@ -166,7 +166,7 @@ tasks.register('generateIcons') {
                 g.setFont(new java.awt.Font("Dialog", java.awt.Font.PLAIN, subSize))
                 g.setColor(DIM)
                 fm = g.getFontMetrics()
-                def sub = "中央基準の双方向重力テトリス"
+                def sub = "中央基準の双方向重力パズル"
                 int subX = (w - fm.stringWidth(sub)) / 2
                 int subY = marginTop + titleSize + subSize + 4
                 g.drawString(sub, subX, subY)

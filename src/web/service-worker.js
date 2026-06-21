@@ -1,10 +1,12 @@
-// Bidirectional Tetris — offline cache service worker.
+// Centerfall — offline cache service worker.
 // Strategy: stale-while-revalidate for all same-origin GETs. The cache is served
 // immediately for speed, but every request also refreshes the cache in the
 // background, so a new deploy is picked up on the next load even if CACHE_VERSION
 // is not bumped (this fixes the previous "permanently stale build" risk).
-const CACHE_VERSION = 'v7-2026-06-21';
-const CACHE_NAME = `bidirectional-tetris-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v8-2026-06-21';
+const CACHE_NAME = `centerfall-${CACHE_VERSION}`;
+// 旧ブランド名のキャッシュも掃除対象にする。
+const CACHE_PREFIXES = ['centerfall-', 'bidirectional-tetris-'];
 
 // Critical assets must all cache for offline play to work.
 const CRITICAL_ASSETS = [
@@ -44,7 +46,8 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((keys) =>
             Promise.all(
                 keys
-                    .filter((key) => key.startsWith('bidirectional-tetris-') && key !== CACHE_NAME)
+                    .filter((key) => key !== CACHE_NAME
+                        && CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)))
                     .map((key) => caches.delete(key))
             )
         )

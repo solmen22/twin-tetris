@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#ff66cc">
-    <meta name="description" content="中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
+    <meta name="description" content="中央基準の双方向重力パズル。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
     <!-- OGP / Twitter card。デプロイ先が決まったら画像 URL を絶対 URL に置き換えると確実。 -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Bidirectional Tetris">
-    <meta property="og:description" content="中央基準の双方向重力テトリス。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
+    <meta property="og:title" content="Centerfall">
+    <meta property="og:description" content="中央基準の双方向重力パズル。上下から同時にミノが現れ、中央境界線消去で大連鎖が発火する。">
     <meta property="og:image" content="screenshot-wide.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Bidirectional Tetris">
-    <meta name="twitter:description" content="中央基準の双方向重力テトリス。中央境界線消去で大連鎖。">
+    <meta name="twitter:title" content="Centerfall">
+    <meta name="twitter:description" content="中央基準の双方向重力パズル。中央境界線消去で大連鎖。">
     <meta name="twitter:image" content="screenshot-wide.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BiTetris">
-    <title>Bidirectional Tetris</title>
+    <meta name="apple-mobile-web-app-title" content="Centerfall">
+    <title>Centerfall</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -36,8 +36,8 @@
     </div>
     <div id="menu" class="screen">
         <div id="offline-badge" class="offline-badge hidden">オフライン</div>
-        <h1>Bidirectional Tetris</h1>
-        <p class="subtitle">中央基準の双方向重力テトリス</p>
+        <h1>Centerfall</h1>
+        <p class="subtitle">中央基準の双方向重力パズル</p>
         <div class="username-field">
             <label for="username-input">ニックネーム</label>
             <input id="username-input" type="text" maxlength="16" placeholder="未設定(ゲスト)" autocomplete="off" spellcheck="false">
@@ -97,7 +97,7 @@
         </div>
 
         <div class="board-wrapper">
-            <canvas id="board-canvas" aria-label="双方向テトリスの盤面" role="img"></canvas>
+            <canvas id="board-canvas" aria-label="Centerfall の盤面" role="img"></canvas>
             <div id="touch-controls" class="touch-controls">
                 <div class="tc-top">
                     <button id="tc-pause" class="tc-mini" type="button" aria-label="ポーズ">⏸</button>
@@ -158,12 +158,12 @@
         <div class="tutorial-panel">
             <div class="tutorial-header">
                 <h2>遊び方ガイド</h2>
-                <p class="tutorial-hint">双方向重力テトリスの独自ルールを最短で理解するためのガイドです。</p>
+                <p class="tutorial-hint">Centerfall の独自ルールを最短で理解するためのガイドです。</p>
             </div>
             <div class="tutorial-body">
                 <section class="tutorial-section">
                     <h3>1. このゲームについて</h3>
-                    <p>双方向重力テトリスは、盤面の<strong>中央に境界線</strong>を挟んで上下から同時にミノが現れる新しいテトリスです。
+                    <p>Centerfall は、盤面の<strong>中央に境界線</strong>を挟んで上下から同時にミノが現れる新感覚の落ち物パズルです。
                         上下の盤面が独立して振る舞いつつ、中央境界線で噛み合って大連鎖が発火します。</p>
                     <div class="board-diagram">
                         <div class="board-cell label">UPPER FIELD<br><span class="diagram-arrow">↓ DOWN ミノが落下</span></div>
@@ -190,7 +190,7 @@
                     <h3>3. DOWN ミノと UP ミノ</h3>
                     <p>盤面には 2 種類のミノが出現します:</p>
                     <ul>
-                        <li><strong>DOWN ミノ</strong>: 上から落ちてくる。普通のテトリスと同じ感覚で扱える。<kbd>↓</kbd> でソフトドロップは「下方向」に効く。</li>
+                        <li><strong>DOWN ミノ</strong>: 上から落ちてくる。普通の落ち物パズルと同じ感覚で扱える。<kbd>↓</kbd> でソフトドロップは「下方向」に効く。</li>
                         <li><strong>UP ミノ</strong>: 下から上に向かって「昇って」くる。<kbd>↓</kbd> でソフトドロップは「上方向に加速」する。回転中心や接地判定の方向だけが反転し、操作の概念は同じ。</li>
                     </ul>
                 </section>
@@ -232,7 +232,7 @@
                             <tr><td>1 ライン</td><td>100</td></tr>
                             <tr><td>2 ライン</td><td>300</td></tr>
                             <tr><td>3 ライン</td><td>500</td></tr>
-                            <tr><td>4 ライン (Tetris)</td><td>800</td></tr>
+                            <tr><td>4 ライン</td><td>800</td></tr>
                             <tr><td>5 ライン以上</td><td>800 + 200 × (超過分)</td></tr>
                         </tbody>
                     </table>

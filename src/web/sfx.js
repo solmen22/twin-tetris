@@ -1,4 +1,4 @@
-// Bidirectional Tetris — synthesized audio (Web Audio API).
+// Centerfall — synthesized audio (Web Audio API).
 // No audio asset files: every effect AND the background music are generated
 // procedurally so the app stays fully offline and zero-download.
 // Exposes window.TetrisSfx, used by the TeaVM build.
