@@ -310,6 +310,29 @@ class GameEngineTest {
     }
 
     @Test
+    void USER_CHOICE_猶予が切れても方向切替で現在ミノが即座に切り替わる() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.T),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+        // 猶予時間(500ms)を終わらせる
+        engine.tick(600);
+        assertThat(engine.state().inSpawnGrace()).isFalse();
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+
+        engine.selectDirectionUp();
+
+        // 猶予外でも、今落下中のミノが即座に UP へ切り替わる
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.UP);
+
+        engine.selectDirectionDown();
+
+        // もう一度押せば DOWN に戻せる
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+    }
+
+    @Test
     void USER_CHOICE_grace中の方向反転が衝突する場合はゲームオーバーにならず現在ミノを維持() {
         GameEngine engine = new GameEngine(
             new TestPieceProvider(TetrominoType.T),

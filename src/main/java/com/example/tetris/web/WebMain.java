@@ -640,7 +640,7 @@ public final class WebMain {
             case 5 -> {
                 e = new GameEngine(new LoopingPieceProvider(TetrominoType.T, TetrominoType.L, TetrominoType.J),
                     DirectionStrategy.userChoice(), GameMode.USER_CHOICE);
-                text = "このゲームは上下から出現! <b>S</b>(↑)を押して“上向き”を選んでみよう。";
+                text = "このゲームは上下から出現! 落下中でも <b>S</b>(↑)で今のミノを“上向き”に即切り替えできる。押してみよう。";
             }
             case 6 -> {
                 e = new GameEngine(new LoopingPieceProvider(TetrominoType.I, TetrominoType.O, TetrominoType.T, TetrominoType.L),

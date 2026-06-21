@@ -256,20 +256,37 @@ public final class GameEngine {
                 ucs.selectUp();
             }
         }
-        if (inSpawnGrace && current != null && current.direction() != direction) {
-            // 猶予中の方向反転で再スポーンが衝突する場合は、ゲームオーバーにせず
-            // 現在のミノ・方向を維持する(反転を無効にするだけ)。
-            Tetromino candidate = direction == Direction.DOWN
-                ? Tetromino.spawnDown(current.type())
-                : Tetromino.spawnUp(current.type());
-            if (!CollisionDetector.collides(board, candidate)) {
-                current = candidate;
+        // 落下中いつでも、現在のミノを反対側へ即座に切り替える。
+        // 切り替え先が衝突して配置できない場合は何もしない(ゲームオーバーにはしない)。
+        if (current != null && current.direction() != direction) {
+            Tetromino flipped = flippedPiece(current, direction);
+            if (flipped != null) {
+                current = flipped;
                 gravityAccumulatedMs = 0.0;
                 locking = false;
                 lockTimerMs = 0.0;
                 lockResets = 0;
             }
         }
+    }
+
+    /**
+     * 現在のミノを、指定方向で出現する形(反対側のフィールド)へ切り替える。
+     * できる限り横位置を維持し、衝突する場合は既定のスポーン位置へフォールバックする。
+     * @return 切り替え後のミノ。どちらも衝突して配置できない場合は null。
+     */
+    private Tetromino flippedPiece(Tetromino piece, Direction newDirection) {
+        Tetromino base = newDirection == Direction.DOWN
+            ? Tetromino.spawnDown(piece.type())
+            : Tetromino.spawnUp(piece.type());
+        Tetromino aligned = base.translated(0, piece.origin().col() - base.origin().col());
+        if (!CollisionDetector.collides(board, aligned)) {
+            return aligned;
+        }
+        if (!CollisionDetector.collides(board, base)) {
+            return base;
+        }
+        return null;
     }
 
     public void togglePause() {
