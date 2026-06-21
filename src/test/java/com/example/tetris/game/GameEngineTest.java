@@ -333,27 +333,49 @@ class GameEngineTest {
     }
 
     @Test
-    void USER_CHOICE_grace中の方向反転が衝突する場合はゲームオーバーにならず現在ミノを維持() {
+    void USER_CHOICE_切替先に置ける場所が無ければゲームオーバーにならず現在ミノを維持() {
         GameEngine engine = new GameEngine(
             new TestPieceProvider(TetrominoType.T),
             DirectionStrategy.userChoice(),
             GameMode.USER_CHOICE
         );
         var board = engine.state().board();
-        // UP ミノのスポーン領域 (rows 19-20, cols 3-6) を埋めておく
-        for (int r = 19; r <= 20; r++) {
-            for (int c = 3; c < 7; c++) {
+        // 下半分(中央〜下端)を全て埋め、UP の置き場所を無くす
+        for (int r = Constants.CENTER_ROW; r <= Constants.LOWER_FIELD_BOTTOM; r++) {
+            for (int c = 0; c < Constants.BOARD_WIDTH; c++) {
                 board.place(new Position(r, c), TetrominoType.Z);
             }
         }
-        assertThat(engine.state().inSpawnGrace()).isTrue();
         assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
 
         engine.selectDirectionUp();
 
-        // 反転すると衝突するため、ゲームオーバーにならず DOWN ミノが維持される
+        // 置ける場所が無いので、ゲームオーバーにならず DOWN ミノが維持される
         assertThat(engine.state().gameOver()).isFalse();
         assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.DOWN);
+    }
+
+    @Test
+    void USER_CHOICE_方向切替は落下の深さ_中央からの距離_を保つ() {
+        GameEngine engine = new GameEngine(
+            new TestPieceProvider(TetrominoType.O),
+            DirectionStrategy.userChoice(),
+            GameMode.USER_CHOICE
+        );
+        // O ミノ(DOWN)を中央付近まで落とす
+        for (int i = 0; i < 20; i++) {
+            engine.softDrop();
+        }
+        int downOriginRow = engine.state().currentPiece().origin().row();
+        // DOWN の O は中央境界線で止まる(origin row 9 付近)
+        assertThat(downOriginRow).isGreaterThan(5);
+
+        engine.selectDirectionUp();
+
+        // UP へ切り替え後も、出現位置(最下段)ではなく中央付近に居る
+        assertThat(engine.state().currentPiece().direction()).isEqualTo(Direction.UP);
+        int upOriginRow = engine.state().currentPiece().origin().row();
+        assertThat(upOriginRow).isLessThan(Constants.LOWER_FIELD_BOTTOM - 2);
     }
 
     @Test

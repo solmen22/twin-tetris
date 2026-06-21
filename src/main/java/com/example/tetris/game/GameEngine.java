@@ -1,6 +1,7 @@
 package com.example.tetris.game;
 
 import com.example.tetris.domain.Board;
+import com.example.tetris.domain.Constants;
 import com.example.tetris.domain.Direction;
 import com.example.tetris.domain.Position;
 import com.example.tetris.domain.Score;
@@ -271,22 +272,41 @@ public final class GameEngine {
     }
 
     /**
-     * 現在のミノを、指定方向で出現する形(反対側のフィールド)へ切り替える。
-     * できる限り横位置を維持し、衝突する場合は既定のスポーン位置へフォールバックする。
-     * @return 切り替え後のミノ。どちらも衝突して配置できない場合は null。
+     * 現在のミノを、指定方向のフィールド(反対側)へ切り替える。
+     * 出現位置(端)へは戻さず、<b>現在の落下位置を中央線で反転した位置</b>に置く
+     * ことで「中央からの深さ」を保つ。横位置も維持する。反転位置が塞がっている
+     * 場合は、そこから最も近い置ける位置を探す。
+     * @return 切り替え後のミノ。配置できる場所が無い場合は null。
      */
     private Tetromino flippedPiece(Tetromino piece, Direction newDirection) {
         Tetromino base = newDirection == Direction.DOWN
             ? Tetromino.spawnDown(piece.type())
             : Tetromino.spawnUp(piece.type());
-        Tetromino aligned = base.translated(0, piece.origin().col() - base.origin().col());
-        if (!CollisionDetector.collides(board, aligned)) {
-            return aligned;
+        // 現在の origin 行を中央線で反転した行を目標にする(落下の深さを保持)。
+        int targetRow = (Constants.BOARD_HEIGHT - 1) - piece.origin().row();
+        Tetromino result = nearestValidPlacement(base, targetRow, piece.origin().col() - base.origin().col());
+        if (result == null) {
+            result = nearestValidPlacement(base, targetRow, 0); // 横位置維持が無理なら中央列
         }
-        if (!CollisionDetector.collides(board, base)) {
-            return base;
+        return result;
+    }
+
+    /** base ミノを、目標 origin 行に最も近い「置ける」行へ配置して返す(無ければ null)。 */
+    private Tetromino nearestValidPlacement(Tetromino base, int targetOriginRow, int dcol) {
+        Tetromino best = null;
+        int bestDist = Integer.MAX_VALUE;
+        for (int row = 0; row < Constants.BOARD_HEIGHT; row++) {
+            Tetromino candidate = base.translated(row - base.origin().row(), dcol);
+            if (CollisionDetector.collides(board, candidate)) {
+                continue;
+            }
+            int dist = Math.abs(row - targetOriginRow);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = candidate;
+            }
         }
-        return null;
+        return best;
     }
 
     public void togglePause() {
