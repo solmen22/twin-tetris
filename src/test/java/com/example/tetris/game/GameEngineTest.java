@@ -336,6 +336,45 @@ class GameEngineTest {
     }
 
     @Test
+    void 接地してもロックディレイ満了までは固定されない() {
+        GameEngine engine = new GameEngine(new TestPieceProvider(
+            List.of(TetrominoType.O, TetrominoType.T), TetrominoType.T));
+        // ソフトドロップで接地まで落とす(余分な呼び出しは衝突で無視される)
+        for (int i = 0; i < 20; i++) {
+            engine.softDrop();
+        }
+        // まだ O のまま(接地直後はロックされていない)
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.O);
+
+        // ロックタイマー開始 + 短い経過ではまだ固定されない
+        engine.tick(10);
+        engine.tick(300);
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.O);
+
+        // ロックディレイ(500ms)を超えると固定され次のミノ T が出現
+        engine.tick(300);
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.T);
+    }
+
+    @Test
+    void 接地中の移動でロックディレイがリセットされる() {
+        GameEngine engine = new GameEngine(new TestPieceProvider(
+            List.of(TetrominoType.O, TetrominoType.T), TetrominoType.T));
+        for (int i = 0; i < 20; i++) {
+            engine.softDrop();
+        }
+
+        engine.tick(10);    // ロック開始、タイマー 500
+        engine.tick(400);   // タイマー 100
+        engine.moveLeft();  // 接地中の移動 → タイマー 500 に再チャージ
+        engine.tick(400);   // タイマー 100(リセットされたのでまだ固定されない)
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.O);
+
+        engine.tick(200);   // 満了 → 固定 → T 出現
+        assertThat(engine.state().currentPiece().type()).isEqualTo(TetrominoType.T);
+    }
+
+    @Test
     void ラインが揃えばスコアとライン数が加算される() {
         GameEngine engine = new GameEngine(new TestPieceProvider(TetrominoType.I));
         var board = engine.state().board();

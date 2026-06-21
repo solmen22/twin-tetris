@@ -130,4 +130,42 @@ class ScoringServiceTest {
 
         assertThat(ScoringService.resultPoints(result, 3)).isEqualTo(300);
     }
+
+    @Test
+    void isTetrisResultは単一ステップ4ライン以上を検出する() {
+        assertThat(ScoringService.isTetrisResult(
+            new LineClearResult(List.of(new CascadeStep(4, 0, false))))).isTrue();
+        assertThat(ScoringService.isTetrisResult(
+            new LineClearResult(List.of(new CascadeStep(3, 0, false))))).isFalse();
+    }
+
+    @Test
+    void backToBackはテトリスstepを1_5倍にする() {
+        LineClearResult result = new LineClearResult(List.of(
+            new CascadeStep(4, 0, false)  // テトリス = 800点
+        ));
+
+        assertThat(ScoringService.resultPoints(result, 1, false)).isEqualTo(800);
+        assertThat(ScoringService.resultPoints(result, 1, true)).isEqualTo(1200);  // 800 × 1.5
+    }
+
+    @Test
+    void backToBackは非テトリスstepには適用されない() {
+        LineClearResult result = new LineClearResult(List.of(
+            new CascadeStep(1, 0, false)  // シングル = 100点
+        ));
+
+        assertThat(ScoringService.resultPoints(result, 1, true)).isEqualTo(100);
+    }
+
+    @Test
+    void backToBackは中央倍率の上にも乗算される() {
+        // 中央込み 4 ライン (upper3 + center) = 基本 800 × 中央倍率2 = 1600、B2B で ×1.5 = 2400
+        LineClearResult result = new LineClearResult(List.of(
+            new CascadeStep(3, 0, true)
+        ));
+
+        assertThat(ScoringService.resultPoints(result, 1, false)).isEqualTo(1600);
+        assertThat(ScoringService.resultPoints(result, 1, true)).isEqualTo(2400);
+    }
 }

@@ -14,6 +14,10 @@ public final class GameEngine {
     private static final double GRAVITY_MIN_MS = 16.0;
     private static final double USER_CHOICE_GRACE_MS = 500.0;
     private static final double CLEAR_FLASH_DURATION_MS = 300.0;
+    // SPEC 8.2: 接地後 0.5 秒のロックディレイ。移動・回転で再チャージするが
+    // 無限ループ防止のため再チャージ回数に上限を設ける。
+    private static final double LOCK_DELAY_MS = 500.0;
+    private static final int LOCK_RESET_MAX = 15;
 
     private final Board board;
     private final PieceQueue pieceQueue;
@@ -30,6 +34,10 @@ public final class GameEngine {
     private double spawnGraceRemainingMs;
     private double clearFlashRemainingMs;
     private int clearFlashMultiplier;
+    private boolean locking;
+    private double lockTimerMs;
+    private int lockResets;
+    private boolean backToBackActive;
 
     // ランタイム統計(GameStats に集約してスナップショット化する)
     private int piecesPlaced;
@@ -58,6 +66,10 @@ public final class GameEngine {
         this.gravityAccumulatedMs = 0.0;
         this.inSpawnGrace = false;
         this.spawnGraceRemainingMs = 0.0;
+        this.locking = false;
+        this.lockTimerMs = 0.0;
+        this.lockResets = 0;
+        this.backToBackActive = false;
         this.piecesPlaced = 0;
         this.centerBoundaryClears = 0;
         this.maxChain = 0;
@@ -88,16 +100,53 @@ public final class GameEngine {
         double period = gravityPeriodMs(score.level());
         while (gravityAccumulatedMs >= period && !gameOver && current != null) {
             gravityAccumulatedMs -= period;
-            applyGravityStep();
+            Tetromino moved = current.translated(current.direction().rowStep(), 0);
+            if (CollisionDetector.collides(board, moved)) {
+                // これ以上落下できない。ロックディレイに委ねるため重力消費を止める。
+                gravityAccumulatedMs = 0.0;
+                break;
+            }
+            current = moved;
+            locking = false;
+        }
+
+        applyLockDelay(deltaMs);
+    }
+
+    /** 接地している間ロックタイマーを進め、満了でロックする(SPEC 8.2)。 */
+    private void applyLockDelay(double deltaMs) {
+        if (gameOver || current == null) {
+            return;
+        }
+        if (isResting()) {
+            if (!locking) {
+                locking = true;
+                lockTimerMs = LOCK_DELAY_MS;
+            } else {
+                lockTimerMs -= deltaMs;
+                if (lockTimerMs <= 0.0) {
+                    lockAndRespawn();
+                }
+            }
+        } else {
+            locking = false;
         }
     }
 
-    private void applyGravityStep() {
+    /** 現在ミノがこれ以上中央方向へ進めない(接地している)か。 */
+    private boolean isResting() {
+        if (current == null) {
+            return false;
+        }
         Tetromino moved = current.translated(current.direction().rowStep(), 0);
-        if (CollisionDetector.collides(board, moved)) {
-            lockAndRespawn();
-        } else {
-            current = moved;
+        return CollisionDetector.collides(board, moved);
+    }
+
+    /** 接地中の移動・回転成功でロックタイマーを再チャージする(上限あり)。 */
+    private void onPieceManipulated() {
+        if (locking && lockResets < LOCK_RESET_MAX) {
+            lockResets++;
+            lockTimerMs = LOCK_DELAY_MS;
         }
     }
 
@@ -116,6 +165,7 @@ public final class GameEngine {
         Tetromino moved = current.translated(0, dcol);
         if (!CollisionDetector.collides(board, moved)) {
             current = moved;
+            onPieceManipulated();
         }
     }
 
@@ -154,14 +204,20 @@ public final class GameEngine {
         if (!canActOnPiece()) {
             return;
         }
-        RotationSystem.tryRotateCw(board, current).ifPresent(p -> current = p);
+        RotationSystem.tryRotateCw(board, current).ifPresent(p -> {
+            current = p;
+            onPieceManipulated();
+        });
     }
 
     public void rotateCcw() {
         if (!canActOnPiece()) {
             return;
         }
-        RotationSystem.tryRotateCcw(board, current).ifPresent(p -> current = p);
+        RotationSystem.tryRotateCcw(board, current).ifPresent(p -> {
+            current = p;
+            onPieceManipulated();
+        });
     }
 
     public void hold() {
@@ -221,12 +277,16 @@ public final class GameEngine {
             board.place(p, type);
         }
         piecesPlaced++;
+        locking = false;
         LineClearService.LineClearResult result = LineClearService.processClears(board);
         if (!result.isEmpty()) {
+            boolean tetris = ScoringService.isTetrisResult(result);
+            boolean backToBack = tetris && backToBackActive;
             int total = result.totalLines();
             score = score.addLines(total);
             int newLevel = score.level();
-            score = score.addPoints(ScoringService.resultPoints(result, newLevel));
+            score = score.addPoints(ScoringService.resultPoints(result, newLevel, backToBack));
+            backToBackActive = tetris;
             triggerClearFlash(result);
         }
         updateStatsForResult(result);
@@ -271,6 +331,9 @@ public final class GameEngine {
         }
         current = piece;
         gravityAccumulatedMs = 0.0;
+        locking = false;
+        lockTimerMs = 0.0;
+        lockResets = 0;
     }
 
     private void startSpawnGrace() {

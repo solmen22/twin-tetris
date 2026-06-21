@@ -13,6 +13,10 @@ public final class ScoringService {
     private static final int SIMULTANEOUS_MULTIPLIER = 5;
     private static final int REN_BONUS_PER_CHAIN = 50;
 
+    // SPEC 9.2: Back-to-Back Tetris は連続テトリス(4 ライン消去)に 1.5 倍。
+    // 端数は四捨五入で決定的に丸める。
+    private static final double BACK_TO_BACK_MULTIPLIER = 1.5;
+
     private static final int HARD_DROP_POINTS_PER_CELL = 2;
     private static final int SOFT_DROP_POINTS_PER_CELL = 1;
 
@@ -58,12 +62,35 @@ public final class ScoringService {
     }
 
     public static long resultPoints(LineClearResult result, int level) {
+        return resultPoints(result, level, false);
+    }
+
+    /**
+     * Back-to-Back ボーナスを考慮してロック 1 回分の合計得点を算出する。
+     * {@code backToBack} が true のとき、テトリス(4 ライン以上)を含むステップに
+     * {@link #BACK_TO_BACK_MULTIPLIER} を掛ける(SPEC 9.2)。
+     */
+    public static long resultPoints(LineClearResult result, int level, boolean backToBack) {
         long total = 0L;
         for (CascadeStep step : result.steps()) {
-            total += stepPoints(step, level);
+            long stepScore = stepPoints(step, level);
+            if (backToBack && step.totalLines() >= TETRIS_LINES) {
+                stepScore = Math.round(stepScore * BACK_TO_BACK_MULTIPLIER);
+            }
+            total += stepScore;
         }
         total += chainBonus(result.chainCount());
         return total;
+    }
+
+    /** ロック 1 回の結果がテトリス(単一ステップで 4 ライン以上消去)を含むか。Back-to-Back 判定に使う。 */
+    public static boolean isTetrisResult(LineClearResult result) {
+        for (CascadeStep step : result.steps()) {
+            if (step.totalLines() >= TETRIS_LINES) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static long hardDropPoints(int cellsDropped) {
